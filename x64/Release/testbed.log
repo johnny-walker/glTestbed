@@ -1,0 +1,11 @@
+﻿  .\src\testbed\model.fs
+          1 file(s) copied.
+  .\src\testbed\model.vs
+          1 file(s) copied.
+  .\dlls\assimp-vc140-mt.dll
+  .\dlls\ikpMP3.dll
+  .\dlls\irrKlang.dll
+          3 file(s) copied.
+  model.cpp
+LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library
+  testbed.vcxproj -> C:\_pdr\openGL\gl_testbed\x64\Release\testbed.exe

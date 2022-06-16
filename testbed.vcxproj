@@ -59,15 +59,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\testbed\Debug\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\testbed\Debug\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\x64\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\x64\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">testbed</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
     <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:/_opengl/bin/3.model_loading/Debug</LocalDebuggerWorkingDirectory>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\testbed\Release\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\testbed\Release\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\x64\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\x64\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">testbed</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
@@ -125,9 +125,9 @@
     <PreBuildEvent>
       <Message>
       </Message>
-      <Command>copy .\src\testbed\*.fs .\testbed\Debug
-copy .\src\testbed\*.vs .\testbed\Debug
-copy .\dlls\*.dll .\testbed\Debug
+      <Command>copy .\src\testbed\*.fs .\x64\Debug
+copy .\src\testbed\*.vs .\x64\Debug
+copy .\dlls\*.dll .\x64\Debug
 </Command>
     </PreBuildEvent>
     <Link>
@@ -138,7 +138,7 @@ copy .\dlls\*.dll .\testbed\Debug
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImportLibrary>
       </ImportLibrary>
-      <ProgramDataBaseFile>./testbed/Debug/testbed.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>./x64/Debug/testbed.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -179,9 +179,9 @@ copy .\dlls\*.dll .\testbed\Debug
     <PreBuildEvent>
       <Message>
       </Message>
-      <Command>copy .\src\testbed\*.fs .\testbed\Release
-copy .\src\testbed\*.vs .\testbed\Release
-copy .\dlls\*.dll .\testbed\Release
+      <Command>copy .\src\testbed\*.fs .\x64\Release
+copy .\src\testbed\*.vs .\x64\Release
+copy .\dlls\*.dll .\x64\Release
 </Command>
     </PreBuildEvent>
     <Link>
@@ -192,7 +192,7 @@ copy .\dlls\*.dll .\testbed\Release
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImportLibrary>
       </ImportLibrary>
-      <ProgramDataBaseFile>./testbed/Release/testbed.pdb</ProgramDataBaseFile>
+      <ProgramDataBaseFile>./x64/Release/testbed.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
