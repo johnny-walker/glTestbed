@@ -1,1 +1,0 @@
-C:\_pdr\openGL\gl_testbed\x64\Debug\testbed.exe
