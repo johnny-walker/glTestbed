@@ -4,8 +4,8 @@ float gLastX = 400.0f;
 float gLastY = 300.0f;
 bool  gFirstMouse = true;
 
-bool World::init() {
-
+bool World::init() 
+{
     // tell GLFW to capture our mouse
     glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -25,32 +25,30 @@ bool World::init() {
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     //stbi_set_flip_vertically_on_load(true);
 
-    // configure global opengl state
-    // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
     myShader = new Shader("model.vs", "model.fs");
-    myModel = new Model("../../resources/objects/spot/spot.obj");
+    mySpot  = new Model("../../resources/objects/spot/spot.obj");
     myCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
     setupFloor();
 
-    // setup global variables for callback
+    // init global variables for callback
     thisWorld = this;
-    gLastX = SCR_WIDTH / 2.0f;
+    gLastX = SCR_WIDTH  / 2.0f;
     gLastY = SCR_HEIGHT / 2.0f;
     gFirstMouse = true;
 
     return true;
 }
 
-void World::render() {
+void World::render() 
+{
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    while (!glfwWindowShouldClose(glWindow))
-    {
+    while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time logic
         // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -81,11 +79,14 @@ void World::render() {
     }
 }
 
-void World::terminate() {
+void World::terminate() 
+{
     // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
 }
-void World::setupFloor() {
+
+void World::setupFloor() 
+{
 
     float planeVertices[] = {
         // positions            // normals         // texcoords
@@ -133,19 +134,24 @@ void World::renderFloor()
 }
 
 // render the loaded model
-void World::renderModel() {
+void World::renderModel() 
+{
     // update model matrix
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.25f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+    // handle rotation
     if (autoRotate) {
         lastAngel += deltaTime;
+    } else if (reverseRotate) {
+        lastAngel -= deltaTime;
     }
     model = glm::rotate(model, (float)(lastAngel), glm::vec3(0.0f, 1.0f, 0.0f));
+
     myShader->setMat4("model", model);
 
     // draw
-    myModel->Draw(*myShader);
+    mySpot->Draw(*myShader);
 }
 
 // utility function for loading a 2D texture from file
@@ -157,9 +163,8 @@ unsigned int World::loadTexture(char const* path)
 
     int width, height, nrComponents;
     unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data)
-    {
-        GLenum format;
+    if (data) {
+        GLenum format = GL_RGB;
         if (nrComponents == 1)
             format = GL_RED;
         else if (nrComponents == 3)
@@ -171,24 +176,19 @@ unsigned int World::loadTexture(char const* path)
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
-    }
-    else
-    {
+    } else {
         std::cout << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }
 
     return textureID;
 }
-
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 
 void World::processInput()
 {
@@ -206,14 +206,18 @@ void World::processInput()
 
     if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
         autoRotate = true;
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_RELEASE) {
+    } else if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_RELEASE) {
         autoRotate = false;
+    }
+
+    if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
+        reverseRotate = true;
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE) {
+        reverseRotate = false;
     }
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and 
@@ -221,13 +225,9 @@ void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-
 void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-    {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         return;
     }
 
@@ -251,8 +251,6 @@ void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         thisWorld->myCamera->ProcessMouseMovement(xoffset, yoffset);
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void World::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     if (thisWorld)

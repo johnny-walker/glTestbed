@@ -19,7 +19,7 @@ class World
 	GLFWwindow* glWindow = NULL;
 
 	Shader* myShader = NULL;
-	Model* myModel = NULL;
+	Model* mySpot = NULL;
 	Camera* myCamera = NULL;
 
 	// settings
@@ -30,6 +30,7 @@ class World
 	float lastFrame = 0.0f;
 
 	bool autoRotate = false;
+	bool reverseRotate = false;
 	float lastAngel = glm::radians(210.f);
 
 	// scene 
