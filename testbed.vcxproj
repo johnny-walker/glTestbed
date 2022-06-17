@@ -385,11 +385,15 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\testbed\model.cpp" />
+    <ClCompile Include="src\testbed\main.cpp" />
+    <ClCompile Include="src\testbed\world.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\testbed\model.fs" />
     <None Include="src\testbed\model.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\testbed\world.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
