@@ -16,10 +16,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\testbed\model.fs">
-      <Filter>Src\SceneObjs</Filter>
+      <Filter>Src</Filter>
     </None>
     <None Include="src\testbed\model.vs">
-      <Filter>Src\SceneObjs</Filter>
+      <Filter>Src</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

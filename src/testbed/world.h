@@ -5,7 +5,8 @@
 
 class World
 {
-	enum model_ops {
+private:
+	enum MODEL_OP {
 		IDLE = 0,
 		ROTATE_CC = 1,	// counter clockwise
 		ROTATE_CLOCK = 2,	// clockwise
@@ -13,6 +14,13 @@ class World
 		DOWN = 4
 	};
 
+	enum CONTROL_TARGET {
+		MODEL = 0,	// spot (cow)
+		LIGHT1 = 1,	// parallel light
+		LIGHT2 = 2,	// point light
+	};
+
+public:
 	GLFWwindow* glWindow = NULL;
 
 	Shader* myShader = NULL;
@@ -31,7 +39,8 @@ class World
 	float lastAngel = glm::radians(210.f);
 	float lastPos = 0.25f;
 
-	model_ops operation = IDLE;
+	MODEL_OP operation = IDLE;
+	CONTROL_TARGET target = MODEL;
 
 public:
 	World(GLFWwindow* window=NULL, int width=800, int height=600) {

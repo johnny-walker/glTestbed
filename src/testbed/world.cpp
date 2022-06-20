@@ -89,26 +89,28 @@ void World::terminate()
 void World::renderModel() 
 {
     // update model matrix
-    switch (operation) {
-    case ROTATE_CC:
-        lastAngel += deltaTime;
-        break;
-    case ROTATE_CLOCK:
-        lastAngel -= deltaTime;
-        break;
-    case UP:
-        lastPos += deltaTime*1;
-        break;
-    case DOWN:
-        lastPos -= deltaTime*1;
-        break;
-    default: //IDLE
-        // do nothing
-        break;
+    if (target == MODEL) {
+        switch (operation) {
+        case ROTATE_CC:
+            lastAngel += deltaTime;
+            break;
+        case ROTATE_CLOCK:
+            lastAngel -= deltaTime;
+            break;
+        case UP:
+            lastPos += deltaTime;
+            break;
+        case DOWN:
+            lastPos -= deltaTime;
+            break;
+        default: //IDLE
+            // do nothing
+            break;
+        }
     }
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, lastPos, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+    model = glm::translate(model, glm::vec3(0.0f, lastPos, 0.0f));
     model = glm::rotate(model, (float)(lastAngel), glm::vec3(0.0f, 1.0f, 0.0f));
 
     myShader->setMat4("model", model);
@@ -130,7 +132,7 @@ void World::processInput()
     else if (glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS)
         myCamera->ProcessKeyboard(RIGHT, deltaTime);
 
-    // model controls
+    // hotkey controls for models/lights
     if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
         operation = ROTATE_CC;
     } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
@@ -142,6 +144,17 @@ void World::processInput()
     } else {
         operation = IDLE;
     }
+
+    // switch target object for hotkey controls
+    if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
+        target = MODEL;
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
+        target = LIGHT1;
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
+        target = LIGHT2;
+    }        
 }
 
 void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)
