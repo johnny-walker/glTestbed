@@ -1,26 +1,18 @@
 #ifndef WORLD_H
 #define WORLD_H
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <learnopengl/shader_m.h>
-#include <learnopengl/camera.h>
-#include <learnopengl/model.h>
-
-#include <iostream>
+#include "opengl.h"
+#include "floor.h"
 
 class World
 {
 	GLFWwindow* glWindow = NULL;
 
 	Shader* myShader = NULL;
-	Model* mySpot = NULL;
 	Camera* myCamera = NULL;
+
+	//scene
+	Floor* floor = NULL;
+	Model* spot = NULL;
 
 	// settings
 	int SCR_WIDTH = 800;
@@ -32,10 +24,6 @@ class World
 	bool autoRotate = false;
 	bool reverseRotate = false;
 	float lastAngel = glm::radians(210.f);
-
-	// scene 
-	unsigned int planeVAO = 0;
-	unsigned int woodTexture = 0;
 
 public:
 	World(GLFWwindow* window=NULL, int width=800, int height=600) {
@@ -53,7 +41,6 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
-	unsigned int loadTexture(char const* path);
 	void processInput();
 	void setupFloor();
 	void renderFloor();

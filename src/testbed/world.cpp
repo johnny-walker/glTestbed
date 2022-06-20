@@ -28,10 +28,11 @@ bool World::init()
     glEnable(GL_DEPTH_TEST);
 
     myShader = new Shader("model.vs", "model.fs");
-    mySpot  = new Model("../../resources/objects/spot/spot.obj");
     myCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
-    setupFloor();
+    spot = new Model("../../resources/objects/spot/spot.obj");
+    floor = new Floor();
+    floor->init(myShader);
 
     // init global variables for callback
     thisWorld = this;
@@ -44,7 +45,6 @@ bool World::init()
 
 void World::render() 
 {
-
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -69,7 +69,7 @@ void World::render()
         myShader->setMat4("projection", projection);
         myShader->setMat4("view", view);
 
-        renderFloor();
+        floor->render();
         renderModel();
    
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -85,52 +85,10 @@ void World::terminate()
     glfwTerminate();
 }
 
-void World::setupFloor() 
-{
-
-    float planeVertices[] = {
-        // positions            // normals         // texcoords
-         25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,  25.0f,  0.0f,
-        -25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
-        -25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 25.0f,
-
-         25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,  25.0f,  0.0f,
-        -25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 25.0f,
-         25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,  25.0f, 25.0f
-    };
-
-    // scene
-    unsigned int planeVBO;
-
-    glGenVertexArrays(1, &planeVAO);
-    glGenBuffers(1, &planeVBO);
-    glBindVertexArray(planeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glBindVertexArray(0);
-
-    woodTexture = loadTexture("../../resources/textures/brickwall.jpg");
-}
 
 void World::renderFloor()
 {
-    // bind texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, woodTexture);
-    
-    // update model matrix
-    glm::mat4 model = glm::mat4(1.0f);
-    myShader->setMat4("model", model);
-    
-    // draw 
-    glBindVertexArray(planeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    floor->render();
 }
 
 // render the loaded model
@@ -151,43 +109,7 @@ void World::renderModel()
     myShader->setMat4("model", model);
 
     // draw
-    mySpot->Draw(*myShader);
-}
-
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
-unsigned int World::loadTexture(char const* path)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-
-    int width, height, nrComponents;
-    unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data) {
-        GLenum format = GL_RGB;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
-    } else {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
-        stbi_image_free(data);
-    }
-
-    return textureID;
+    spot->Draw(*myShader);
 }
 
 void World::processInput()
@@ -212,8 +134,7 @@ void World::processInput()
 
     if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
         reverseRotate = true;
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE) {
+    } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE) {
         reverseRotate = false;
     }
 }
@@ -234,8 +155,7 @@ void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
-    if (gFirstMouse)
-    {
+    if (gFirstMouse) {
         gLastX = xpos;
         gLastY = ypos;
         gFirstMouse = false;
