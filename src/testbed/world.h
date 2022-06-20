@@ -5,6 +5,14 @@
 
 class World
 {
+	enum model_ops {
+		IDLE = 0,
+		ROTATE_CC = 1,	// counter clockwise
+		ROTATE_CLOCK = 2,	// clockwise
+		UP = 3,
+		DOWN = 4
+	};
+
 	GLFWwindow* glWindow = NULL;
 
 	Shader* myShader = NULL;
@@ -20,10 +28,10 @@ class World
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
-
-	bool autoRotate = false;
-	bool reverseRotate = false;
 	float lastAngel = glm::radians(210.f);
+	float lastPos = 0.25f;
+
+	model_ops operation = IDLE;
 
 public:
 	World(GLFWwindow* window=NULL, int width=800, int height=600) {
@@ -42,8 +50,6 @@ public:
 
 private:
 	void processInput();
-	void setupFloor();
-	void renderFloor();
 	void renderModel();
 };
 #endif //WORLD_H

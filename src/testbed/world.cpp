@@ -85,29 +85,33 @@ void World::terminate()
     glfwTerminate();
 }
 
-
-void World::renderFloor()
-{
-    floor->render();
-}
-
 // render the loaded model
 void World::renderModel() 
 {
     // update model matrix
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.25f, 0.0f));
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    // handle rotation
-    if (autoRotate) {
+    switch (operation) {
+    case ROTATE_CC:
         lastAngel += deltaTime;
-    } else if (reverseRotate) {
+        break;
+    case ROTATE_CLOCK:
         lastAngel -= deltaTime;
+        break;
+    case UP:
+        lastPos += deltaTime*1;
+        break;
+    case DOWN:
+        lastPos -= deltaTime*1;
+        break;
+    default: //IDLE
+        // do nothing
+        break;
     }
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, lastPos, 0.0f));
+    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
     model = glm::rotate(model, (float)(lastAngel), glm::vec3(0.0f, 1.0f, 0.0f));
 
     myShader->setMat4("model", model);
-
     // draw
     spot->Draw(*myShader);
 }
@@ -126,16 +130,17 @@ void World::processInput()
     else if (glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS)
         myCamera->ProcessKeyboard(RIGHT, deltaTime);
 
+    // model controls
     if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-        autoRotate = true;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_RELEASE) {
-        autoRotate = false;
-    }
-
-    if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-        reverseRotate = true;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE) {
-        reverseRotate = false;
+        operation = ROTATE_CC;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
+        operation = ROTATE_CLOCK;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F) == GLFW_PRESS) {
+        operation = UP;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_G) == GLFW_PRESS) {
+        operation = DOWN;
+    } else {
+        operation = IDLE;
     }
 }
 
