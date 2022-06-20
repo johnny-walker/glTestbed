@@ -2,20 +2,13 @@
 #define WORLD_H
 #include "opengl.h"
 #include "floor.h"
+#include "cow.h"
 
 class World
 {
 private:
-	enum MODEL_OP {
-		IDLE = 0,
-		ROTATE_CC = 1,	// counter clockwise
-		ROTATE_CLOCK = 2,	// clockwise
-		UP = 3,
-		DOWN = 4
-	};
-
 	enum CONTROL_TARGET {
-		MODEL = 0,	// spot (cow)
+		COW = 0,	// model spot
 		LIGHT1 = 1,	// parallel light
 		LIGHT2 = 2,	// point light
 	};
@@ -28,7 +21,7 @@ public:
 
 	//scene
 	Floor* floor = NULL;
-	Model* spot = NULL;
+	Cow* cow = NULL;
 
 	// settings
 	int SCR_WIDTH = 800;
@@ -36,11 +29,8 @@ public:
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
-	float lastAngel = glm::radians(210.f);
-	float lastPos = 0.25f;
 
-	MODEL_OP operation = IDLE;
-	CONTROL_TARGET target = MODEL;
+	CONTROL_TARGET target = COW;
 
 public:
 	World(GLFWwindow* window=NULL, int width=800, int height=600) {

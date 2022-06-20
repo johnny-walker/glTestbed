@@ -1,7 +1,7 @@
 #include "world.h"
 World* thisWorld = NULL;
-float gLastX = 400.0f;
-float gLastY = 300.0f;
+float gLastX = 0.f;
+float gLastY = 0.f;
 bool  gFirstMouse = true;
 
 bool World::init() 
@@ -27,12 +27,14 @@ bool World::init()
 
     glEnable(GL_DEPTH_TEST);
 
-    myShader = new Shader("model.vs", "model.fs");
+    myShader = new Shader("world.vs", "world.fs");
     myCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
-    spot = new Model("../../resources/objects/spot/spot.obj");
-    floor = new Floor();
-    floor->init(myShader);
+    cow = new Cow(SCR_WIDTH, SCR_HEIGHT, "../../resources/objects/spot/spot.obj");
+    cow->init(myShader, myCamera);
+
+    floor = new Floor(SCR_WIDTH, SCR_HEIGHT);
+    floor->init(myShader, myCamera);
 
     // init global variables for callback
     thisWorld = this;
@@ -62,15 +64,8 @@ void World::render()
 
         // don't forget to enable shader before setting uniforms
         myShader->use();
-
-        // create view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(myCamera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = myCamera->GetViewMatrix();
-        myShader->setMat4("projection", projection);
-        myShader->setMat4("view", view);
-
         floor->render();
-        renderModel();
+        cow->render();
    
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -85,44 +80,12 @@ void World::terminate()
     glfwTerminate();
 }
 
-// render the loaded model
-void World::renderModel() 
-{
-    // update model matrix
-    if (target == MODEL) {
-        switch (operation) {
-        case ROTATE_CC:
-            lastAngel += deltaTime;
-            break;
-        case ROTATE_CLOCK:
-            lastAngel -= deltaTime;
-            break;
-        case UP:
-            lastPos += deltaTime;
-            break;
-        case DOWN:
-            lastPos -= deltaTime;
-            break;
-        default: //IDLE
-            // do nothing
-            break;
-        }
-    }
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    model = glm::translate(model, glm::vec3(0.0f, lastPos, 0.0f));
-    model = glm::rotate(model, (float)(lastAngel), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    myShader->setMat4("model", model);
-    // draw
-    spot->Draw(*myShader);
-}
-
 void World::processInput()
 {
     if (glfwGetKey(glWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(glWindow, true);
 
+    // camera pos
     if (glfwGetKey(glWindow, GLFW_KEY_W) == GLFW_PRESS)
         myCamera->ProcessKeyboard(FORWARD, deltaTime);
     else if (glfwGetKey(glWindow, GLFW_KEY_S) == GLFW_PRESS)
@@ -133,21 +96,33 @@ void World::processInput()
         myCamera->ProcessKeyboard(RIGHT, deltaTime);
 
     // hotkey controls for models/lights
-    if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-        operation = ROTATE_CC;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-        operation = ROTATE_CLOCK;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F) == GLFW_PRESS) {
-        operation = UP;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_G) == GLFW_PRESS) {
-        operation = DOWN;
-    } else {
-        operation = IDLE;
+    switch (target) {
+    case COW:
+        if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
+            cow->updateAngle(deltaTime);//counter clockwise
+        } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
+            cow->updateAngle(-deltaTime);//clockwise
+        } else if (glfwGetKey(glWindow, GLFW_KEY_F) == GLFW_PRESS) {
+            cow->updatePos(deltaTime, 0, 0);//x:left
+        } else if (glfwGetKey(glWindow, GLFW_KEY_G) == GLFW_PRESS) {
+            cow->updatePos(-deltaTime, 0, 0);//x:right
+        } else if (glfwGetKey(glWindow, GLFW_KEY_H) == GLFW_PRESS) {
+            cow->updatePos(0, deltaTime, 0);//y:up
+        } else if (glfwGetKey(glWindow, GLFW_KEY_I) == GLFW_PRESS) {
+            cow->updatePos(0, -deltaTime, 0);//y:down
+        } else if (glfwGetKey(glWindow, GLFW_KEY_J) == GLFW_PRESS) {
+            cow->updatePos(0, 0, deltaTime);//z:ahead
+        } else if (glfwGetKey(glWindow, GLFW_KEY_K) == GLFW_PRESS) {
+            cow->updatePos(0, 0, -deltaTime);//z:back
+        }
+        break;
+    default:
+        break;
     }
 
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
-        target = MODEL;
+        target = COW;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         target = LIGHT1;

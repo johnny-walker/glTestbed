@@ -385,17 +385,19 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\testbed\baseObj.cpp" />
+    <ClCompile Include="src\testbed\object.cpp" />
+    <ClCompile Include="src\testbed\cow.cpp" />
     <ClCompile Include="src\testbed\floor.cpp" />
     <ClCompile Include="src\testbed\main.cpp" />
     <ClCompile Include="src\testbed\world.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\testbed\model.fs" />
-    <None Include="src\testbed\model.vs" />
+    <None Include="src\testbed\world.fs" />
+    <None Include="src\testbed\world.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\testbed\baseObj.h" />
+    <ClInclude Include="src\testbed\object.h" />
+    <ClInclude Include="src\testbed\cow.h" />
     <ClInclude Include="src\testbed\floor.h" />
     <ClInclude Include="src\testbed\opengl.h" />
     <ClInclude Include="src\testbed\world.h" />

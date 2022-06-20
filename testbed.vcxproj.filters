@@ -7,26 +7,32 @@
     <ClCompile Include="src\testbed\world.cpp">
       <Filter>Src</Filter>
     </ClCompile>
-    <ClCompile Include="src\testbed\baseObj.cpp">
-      <Filter>Src\SceneObjs</Filter>
+    <ClCompile Include="src\testbed\object.cpp">
+      <Filter>Src\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\testbed\floor.cpp">
-      <Filter>Src\SceneObjs</Filter>
+      <Filter>Src\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testbed\cow.cpp">
+      <Filter>Src\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\testbed\model.fs">
-      <Filter>Src</Filter>
+    <None Include="src\testbed\world.fs">
+      <Filter>Src\Shaders</Filter>
     </None>
-    <None Include="src\testbed\model.vs">
-      <Filter>Src</Filter>
+    <None Include="src\testbed\world.vs">
+      <Filter>Src\Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Src">
       <UniqueIdentifier>{e6a9e912-652b-44a5-a8db-7cdfe9cc6377}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Src\SceneObjs">
+    <Filter Include="Src\Shaders">
+      <UniqueIdentifier>{af427689-5b89-42eb-9aeb-54b97a6d8a12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Scene">
       <UniqueIdentifier>{5075b9d0-a14f-4070-9b49-68dfe7720939}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -34,14 +40,17 @@
     <ClInclude Include="src\testbed\world.h">
       <Filter>Src</Filter>
     </ClInclude>
-    <ClInclude Include="src\testbed\baseObj.h">
-      <Filter>Src\SceneObjs</Filter>
+    <ClInclude Include="src\testbed\object.h">
+      <Filter>Src\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\testbed\floor.h">
-      <Filter>Src\SceneObjs</Filter>
+      <Filter>Src\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\testbed\opengl.h">
       <Filter>Src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\testbed\cow.h">
+      <Filter>Src\Scene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
