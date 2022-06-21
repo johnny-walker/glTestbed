@@ -30,11 +30,13 @@ bool World::init()
     myShader = new Shader("world.vs", "world.fs");
     myCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
-    cow = new Cow(SCR_WIDTH, SCR_HEIGHT, "../../resources/objects/spot/spot.obj");
-    cow->init(myShader, myCamera);
-
     floor = new Floor(SCR_WIDTH, SCR_HEIGHT);
     floor->init(myShader, myCamera);
+
+    cow = new Cow(SCR_WIDTH, SCR_HEIGHT, "../../resources/objects/spot/spot.obj");
+    cow->init(myShader, myCamera);
+    cow->setAngle(glm::radians(150.f));
+    cow->setPos(0.f, 0.25f, 0.f);
 
     // init global variables for callback
     thisWorld = this;
@@ -51,8 +53,7 @@ void World::render()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!glfwWindowShouldClose(glWindow)) {
-        // per-frame time logic
-        // --------------------
+        // per-frame time dalta
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -62,13 +63,9 @@ void World::render()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't forget to enable shader before setting uniforms
-        myShader->use();
         floor->render();
         cow->render();
    
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }

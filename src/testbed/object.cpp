@@ -1,5 +1,25 @@
 #include "object.h"
 
+void BaseObject::setAngle(float rotate) {
+    angle = rotate;
+}
+
+void BaseObject::setPos(float posX, float posY, float posZ) {
+    pos.x += posX;
+    pos.y += posY;
+    pos.z += posZ;
+}
+
+void BaseObject::updateAngle(float delta) {
+    angle += delta;
+}
+
+void BaseObject::updatePos(float deltaX, float deltaY, float deltaZ) {
+    pos.x += deltaX;
+    pos.y += deltaY;
+    pos.z += deltaZ;
+}
+
 unsigned int BaseObject::loadTexture(char const* path)
 {
     unsigned int textureID=0;

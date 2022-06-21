@@ -37,28 +37,21 @@ void Floor::init(Shader* pShader, Camera* pCamera)
 
 void Floor::render()
 {
+    pCurShader->use();
+
     // bind texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, woodTexture);
 
-    // create view/projection transformations
+    // create mvp 
     glm::mat4 projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
     glm::mat4 view = pCurCamera->GetViewMatrix();
+    glm::mat4 model = glm::mat4(1.0f);
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
-
-    // update model matrix
-    glm::mat4 model = glm::mat4(1.0f);
     pCurShader->setMat4("model", model);
 
     // draw 
     glBindVertexArray(planeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-void Floor::updateAngle(float delta) {
-    //floor can't update
-}
-void Floor::updatePos(float deltaX, float deltaY, float deltaZ) {
-    //floor can't update
 }
