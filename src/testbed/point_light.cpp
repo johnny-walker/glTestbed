@@ -22,7 +22,10 @@ void PointLight::render()
     
     // draw 
     pCurShader->setInt("renderMode", 1);
-    initSphere();
+    if (dirty) {
+        initSphere();
+        dirty = false;
+    }
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 
@@ -62,7 +65,7 @@ void PointLight::initSphere()
             glm::vec3 scaledPos = pos + glm::vec3(xPos, yPos, zPos) * scale;
             positions.push_back(scaledPos);
             uv.push_back(glm::vec2(xSegment, ySegment));
-            normals.push_back(scaledPos);
+            normals.push_back(glm::vec3(xPos, yPos, zPos));
         }
     }
 

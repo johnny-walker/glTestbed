@@ -10,7 +10,8 @@ protected:
 
 	int scr_width  = 0;
 	int scr_height = 0;
-
+	
+	bool dirty = true;	// flag if angle or pos changes
 	float angle = 0;
 	glm::vec3 pos = glm::vec3(0.0f, 0.0f ,0.0f);
 

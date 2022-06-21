@@ -2,22 +2,26 @@
 
 void BaseObject::setAngle(float rotate) {
     angle = rotate;
+    dirty = true;
 }
 
 void BaseObject::setPos(float posX, float posY, float posZ) {
     pos.x += posX;
     pos.y += posY;
     pos.z += posZ;
+    dirty = true;
 }
 
 void BaseObject::updateAngle(float delta) {
     angle += delta;
+    dirty = true;
 }
 
 void BaseObject::updatePos(float deltaX, float deltaY, float deltaZ) {
     pos.x += deltaX;
     pos.y += deltaY;
     pos.z += deltaZ;
+    dirty = true;
 }
 
 unsigned int BaseObject::loadTexture(char const* path)

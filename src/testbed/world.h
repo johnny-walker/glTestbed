@@ -32,6 +32,7 @@ private:
 	float lastFrame = 0.0f;
 
 	CTRL_TARGET target = CTRL_TARGET::COW;
+	std::vector<glm::vec3> colors;
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
@@ -39,7 +40,9 @@ public:
 		scrWidth = width;
 		scrHeight = height;
 	}
-	~World() {}
+	~World() {
+		colors.clear();
+	}
 
 public:
 	bool init();

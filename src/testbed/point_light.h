@@ -18,7 +18,6 @@ private:
 	int indexCount = 0;
 	float scale = 0.05f;
 	glm::vec3 lightColor = glm::vec3(1.f, 1.f, 1.f);
-
 	void initSphere();
 };
 #endif //POINT_LIGHT_H
