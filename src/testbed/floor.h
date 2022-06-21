@@ -7,7 +7,6 @@ class Floor: public BaseObject
 public:
 	Floor(int width, int height) :
 		BaseObject(width, height) {}
-
 	~Floor() {}
 
 	void init(Shader* pShader, Camera* pCamera);

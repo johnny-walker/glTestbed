@@ -12,7 +12,6 @@ public:
 		//stbi_set_flip_vertically_on_load(true);
 		spot = new Model(path, gamma);
 	}
-
 	~Cow() 
 	{
 		delete spot;
@@ -23,7 +22,7 @@ public:
 	void render();
 
 private:
-	Model* spot = NULL;
+	Model* spot = nullptr;	// this cow's name is spot
 };
 #endif //Cow
 

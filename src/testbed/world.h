@@ -3,42 +3,45 @@
 #include "opengl.h"
 #include "floor.h"
 #include "cow.h"
+#include "point_light.h"
 
 class World
 {
 private:
-	enum CONTROL_TARGET {
-		COW = 0,	// model spot
-		LIGHT1 = 1,	// parallel light
-		LIGHT2 = 2,	// point light
+	enum class CTRL_TARGET {
+		COW,				// model spot
+		POINT_LIGHT,		// point light
+		PARALLEL_LIGHT,		// parallel light
 	};
 
-public:
-	GLFWwindow* glWindow = NULL;
+	GLFWwindow* glWindow = nullptr;
 
-	Shader* pShader = NULL;
-	Camera* pCamera = NULL;
+	Shader* pShader = nullptr;
+	Camera* pCamera = nullptr;
 
 	//scene
-	Floor* floor = NULL;
-	Cow* cow = NULL;
+	Floor* floor = nullptr;
+	Cow* cow = nullptr;
+	PointLight* ptLight = nullptr;
 
 	// settings
-	int SCR_WIDTH = 800;
-	int SCR_HEIGHT = 600;
+	int scrWidth  = 800;
+	int scrHeight = 600;
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
-	CONTROL_TARGET target = COW;
+	CTRL_TARGET target = CTRL_TARGET::COW;
 
 public:
-	World(GLFWwindow* window=NULL, int width=800, int height=600) {
+	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
 		glWindow = window;
-		SCR_WIDTH = width;
-		SCR_HEIGHT = height;
+		scrWidth = width;
+		scrHeight = height;
 	}
+	~World() {}
 
+public:
 	bool init();
 	void render();
 	void terminate();

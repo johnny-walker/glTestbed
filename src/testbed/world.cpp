@@ -1,16 +1,16 @@
 #include "world.h"
-World* thisWorld = NULL;
-float gLastX = 0.f;
-float gLastY = 0.f;
-bool  gFirstMouse = true;
+World* thisWorld = nullptr;
+float LASTX = 0.f;
+float LASTY = 0.f;
+bool  INIT_MOUSE = true;
 
 bool World::init() 
 {
     // init global variables for callback
     thisWorld = this;
-    gLastX = SCR_WIDTH / 2.0f;
-    gLastY = SCR_HEIGHT / 2.0f;
-    gFirstMouse = true;
+    LASTX = scrWidth  / 2.f;
+    LASTY = scrHeight / 2.f;
+    INIT_MOUSE = true;
 
     glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwMakeContextCurrent(glWindow);
@@ -26,23 +26,24 @@ bool World::init()
 
     glEnable(GL_DEPTH_TEST);
 
+    // init shaders
     pShader = new Shader("world.vs", "world.fs");
     pCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
-    floor = new Floor(SCR_WIDTH, SCR_HEIGHT);
+    // create scene objects
+    floor = new Floor(scrWidth, scrHeight);
     floor->init(pShader, pCamera);
 
-    cow = new Cow(SCR_WIDTH, SCR_HEIGHT, "../../resources/objects/spot/spot.obj");
-    cow->init(pShader, pCamera);
+    cow = new Cow(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
     cow->setAngle(glm::radians(150.f));
     cow->setPos(0.f, 0.25f, 0.f);
-    
-    glm::vec3 lightPos(2.f, 1.f, 2.f);
-    glm::vec3 lightColor(1.f, 1.0f, 1.f);
+    cow->init(pShader, pCamera);
 
-    pShader->use();
-    pShader->setVec3("lightPos", lightPos);
-    pShader->setVec3("lightColor", lightColor);
+    // init light attributes
+    ptLight = new PointLight(scrWidth, scrHeight);
+    ptLight->setPos(2.f, 1.f, 2.f);
+    ptLight->setColor(glm::vec3(1.f, 1.f, 1.f));
+    ptLight->init(pShader, pCamera);
 
     return true;
 }
@@ -63,6 +64,7 @@ void World::render()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ptLight->render();
         floor->render();
         cow->render();
    
@@ -94,23 +96,43 @@ void World::processInput()
 
     // hotkey controls for models/lights
     switch (target) {
-    case COW:
+    case CTRL_TARGET::COW:
         if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-            cow->updateAngle(deltaTime);//counter clockwise
+            cow->updateAngle(deltaTime);        //counter clockwise
         } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-            cow->updateAngle(-deltaTime);//clockwise
-        } else if (glfwGetKey(glWindow, GLFW_KEY_F) == GLFW_PRESS) {
-            cow->updatePos(deltaTime, 0, 0);//x:left
-        } else if (glfwGetKey(glWindow, GLFW_KEY_G) == GLFW_PRESS) {
-            cow->updatePos(-deltaTime, 0, 0);//x:right
-        } else if (glfwGetKey(glWindow, GLFW_KEY_H) == GLFW_PRESS) {
-            cow->updatePos(0, deltaTime, 0);//y:up
-        } else if (glfwGetKey(glWindow, GLFW_KEY_I) == GLFW_PRESS) {
-            cow->updatePos(0, -deltaTime, 0);//y:down
-        } else if (glfwGetKey(glWindow, GLFW_KEY_J) == GLFW_PRESS) {
-            cow->updatePos(0, 0, deltaTime);//z:ahead
-        } else if (glfwGetKey(glWindow, GLFW_KEY_K) == GLFW_PRESS) {
-            cow->updatePos(0, 0, -deltaTime);//z:back
+            cow->updateAngle(-deltaTime);       //clockwise
+        } else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            cow->updatePos(deltaTime, 0, 0);    //x:left
+        } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            cow->updatePos(-deltaTime, 0, 0);   //x:right
+        } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+            cow->updatePos(0, deltaTime, 0);    //y:up
+        } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+            cow->updatePos(0, -deltaTime, 0);   //y:down
+        } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            cow->updatePos(0, 0, deltaTime);    //z:ahead
+        } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+            cow->updatePos(0, 0, -deltaTime);   //z:back
+        }
+        break;
+    case CTRL_TARGET::POINT_LIGHT:
+        if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            ptLight->updatePos(deltaTime, 0, 0);    //x:left
+        }
+        else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            ptLight->updatePos(-deltaTime, 0, 0);   //x:right
+        }
+        else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+            ptLight->updatePos(0, deltaTime, 0);    //y:up
+        }
+        else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+            ptLight->updatePos(0, -deltaTime, 0);   //y:down
+        }
+        else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            ptLight->updatePos(0, 0, deltaTime);    //z:ahead
+        }
+        else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+            ptLight->updatePos(0, 0, -deltaTime);   //z:back
         }
         break;
     default:
@@ -119,13 +141,13 @@ void World::processInput()
 
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
-        target = COW;
+        target = CTRL_TARGET::COW;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
-        target = LIGHT1;
+        target = CTRL_TARGET::POINT_LIGHT;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
-        target = LIGHT2;
+        target = CTRL_TARGET::PARALLEL_LIGHT;
     }        
 }
 
@@ -145,17 +167,17 @@ void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
-    if (gFirstMouse) {
-        gLastX = xpos;
-        gLastY = ypos;
-        gFirstMouse = false;
+    if (INIT_MOUSE) {
+        LASTX = xpos;
+        LASTY = ypos;
+        INIT_MOUSE = false;
     }
 
-    float xoffset = xpos - gLastX;
-    float yoffset = gLastY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = xpos - LASTX;
+    float yoffset = LASTY - ypos; // reversed since y-coordinates go from bottom to top
 
-    gLastX = xpos;
-    gLastY = ypos;
+    LASTX = xpos;
+    LASTY = ypos;
 
     if (thisWorld)
         thisWorld->pCamera->ProcessMouseMovement(xoffset, yoffset);

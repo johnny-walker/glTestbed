@@ -389,6 +389,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="src\testbed\cow.cpp" />
     <ClCompile Include="src\testbed\floor.cpp" />
     <ClCompile Include="src\testbed\main.cpp" />
+    <ClCompile Include="src\testbed\point_light.cpp" />
     <ClCompile Include="src\testbed\world.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -400,6 +401,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="src\testbed\cow.h" />
     <ClInclude Include="src\testbed\floor.h" />
     <ClInclude Include="src\testbed\opengl.h" />
+    <ClInclude Include="src\testbed\point_light.h" />
     <ClInclude Include="src\testbed\world.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

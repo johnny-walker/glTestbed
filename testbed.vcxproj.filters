@@ -16,6 +16,9 @@
     <ClCompile Include="src\testbed\cow.cpp">
       <Filter>Src\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\testbed\point_light.cpp">
+      <Filter>Src\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\testbed\world.fs">
@@ -50,6 +53,9 @@
       <Filter>Src</Filter>
     </ClInclude>
     <ClInclude Include="src\testbed\cow.h">
+      <Filter>Src\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\testbed\point_light.h">
       <Filter>Src\Scene</Filter>
     </ClInclude>
   </ItemGroup>

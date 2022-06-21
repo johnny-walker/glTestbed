@@ -5,10 +5,10 @@
 class BaseObject
 {
 protected:
-	Shader* pCurShader = NULL;
-	Camera* pCurCamera = NULL;
+	Shader* pCurShader = nullptr;
+	Camera* pCurCamera = nullptr;
 
-	int scr_width = 0;
+	int scr_width  = 0;
 	int scr_height = 0;
 
 	float angle = 0;
@@ -17,17 +17,16 @@ protected:
 public:
 	BaseObject(int width, int height) 
 	{
-		scr_width = width;
+		scr_width  = width;
 		scr_height = height;
 	}
-
 	~BaseObject() {}
 
 public:
 	void setAngle(float rotate);								//init angle
 	void setPos(float posX, float posY, float posZ);			//init pos
-	void updateAngle(float delta);								//given delta
-	void updatePos(float deltaX, float deltaY, float deltaZ);	//given delta
+	void updateAngle(float delta);								//delta
+	void updatePos(float deltaX, float deltaY, float deltaZ);	//delta
 
 	virtual void init(Shader* pShader, Camera* pCamera) = 0;
 	virtual void render() = 0;
