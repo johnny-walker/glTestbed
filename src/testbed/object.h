@@ -29,7 +29,6 @@ public:
 	void updateAngle(float delta);								//given delta
 	void updatePos(float deltaX, float deltaY, float deltaZ);	//given delta
 
-
 	virtual void init(Shader* pShader, Camera* pCamera) = 0;
 	virtual void render() = 0;
 

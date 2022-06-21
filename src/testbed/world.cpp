@@ -6,43 +6,43 @@ bool  gFirstMouse = true;
 
 bool World::init() 
 {
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // init global variables for callback
+    thisWorld = this;
+    gLastX = SCR_WIDTH / 2.0f;
+    gLastY = SCR_HEIGHT / 2.0f;
+    gFirstMouse = true;
 
+    glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwMakeContextCurrent(glWindow);
     glfwSetFramebufferSizeCallback(glWindow, framebuffer_size_callback);
     glfwSetCursorPosCallback(glWindow, mouse_callback);
     glfwSetScrollCallback(glWindow, scroll_callback);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return false;
     }
 
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    //stbi_set_flip_vertically_on_load(true);
-
     glEnable(GL_DEPTH_TEST);
 
-    myShader = new Shader("world.vs", "world.fs");
-    myCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
+    pShader = new Shader("world.vs", "world.fs");
+    pCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
     floor = new Floor(SCR_WIDTH, SCR_HEIGHT);
-    floor->init(myShader, myCamera);
+    floor->init(pShader, pCamera);
 
     cow = new Cow(SCR_WIDTH, SCR_HEIGHT, "../../resources/objects/spot/spot.obj");
-    cow->init(myShader, myCamera);
+    cow->init(pShader, pCamera);
     cow->setAngle(glm::radians(150.f));
     cow->setPos(0.f, 0.25f, 0.f);
+    
+    glm::vec3 lightPos(2.f, 1.f, 2.f);
+    glm::vec3 lightColor(1.f, 1.0f, 1.f);
 
-    // init global variables for callback
-    thisWorld = this;
-    gLastX = SCR_WIDTH  / 2.0f;
-    gLastY = SCR_HEIGHT / 2.0f;
-    gFirstMouse = true;
+    pShader->use();
+    pShader->setVec3("lightPos", lightPos);
+    pShader->setVec3("lightColor", lightColor);
 
     return true;
 }
@@ -84,13 +84,13 @@ void World::processInput()
 
     // camera pos
     if (glfwGetKey(glWindow, GLFW_KEY_W) == GLFW_PRESS)
-        myCamera->ProcessKeyboard(FORWARD, deltaTime);
+        pCamera->ProcessKeyboard(FORWARD, deltaTime);
     else if (glfwGetKey(glWindow, GLFW_KEY_S) == GLFW_PRESS)
-        myCamera->ProcessKeyboard(BACKWARD, deltaTime);
+        pCamera->ProcessKeyboard(BACKWARD, deltaTime);
     else if (glfwGetKey(glWindow, GLFW_KEY_A) == GLFW_PRESS)
-        myCamera->ProcessKeyboard(LEFT, deltaTime);
+        pCamera->ProcessKeyboard(LEFT, deltaTime);
     else if (glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS)
-        myCamera->ProcessKeyboard(RIGHT, deltaTime);
+        pCamera->ProcessKeyboard(RIGHT, deltaTime);
 
     // hotkey controls for models/lights
     switch (target) {
@@ -158,12 +158,12 @@ void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     gLastY = ypos;
 
     if (thisWorld)
-        thisWorld->myCamera->ProcessMouseMovement(xoffset, yoffset);
+        thisWorld->pCamera->ProcessMouseMovement(xoffset, yoffset);
 }
 
 void World::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     if (thisWorld)
-        thisWorld->myCamera->ProcessMouseScroll(static_cast<float>(yoffset));
+        thisWorld->pCamera->ProcessMouseScroll(static_cast<float>(yoffset));
 }
 

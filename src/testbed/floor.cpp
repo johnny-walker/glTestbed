@@ -32,6 +32,8 @@ void Floor::init(Shader* pShader, Camera* pCamera)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glBindVertexArray(0);
 
+    //flip loaded texture's on the y-axis (st coordinate)
+    //stbi_set_flip_vertically_on_load(true);
     woodTexture = loadTexture("../../resources/textures/brickwall.jpg");
 }
 

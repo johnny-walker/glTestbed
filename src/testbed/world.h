@@ -16,8 +16,8 @@ private:
 public:
 	GLFWwindow* glWindow = NULL;
 
-	Shader* myShader = NULL;
-	Camera* myCamera = NULL;
+	Shader* pShader = NULL;
+	Camera* pCamera = NULL;
 
 	//scene
 	Floor* floor = NULL;
@@ -49,7 +49,6 @@ public:
 
 private:
 	void processInput();
-	void renderModel();
 };
 #endif //WORLD_H
 
