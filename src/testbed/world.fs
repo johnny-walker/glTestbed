@@ -9,13 +9,16 @@ uniform sampler2D texture_diffuse1;
 uniform vec3 lightPos; 
 uniform vec3 lightColor; 
 
+// render flag
 uniform int renderMode; 
 
 void main()
 {    
     if (renderMode == 1) {
+        // draw point light
         FragColor = vec4(lightColor, 1.0);
     } else {
+        // draw scene objects
         FragColor = texture(texture_diffuse1, TexCoords);
 
         float ambientStrength = 0.1;

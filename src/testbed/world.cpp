@@ -53,7 +53,7 @@ bool World::init()
 
     // init light attributes
     ptLight = new PointLight(scrWidth, scrHeight);
-    ptLight->setPos(1.f, 1.5f, 3.f);
+    ptLight->setPos(1.f, 1.f, 2.f);
     ptLight->setColor(glm::vec3(1.f, 1.f, 1.f));
     ptLight->init(pShader, pCamera);
 

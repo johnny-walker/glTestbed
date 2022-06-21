@@ -14,6 +14,13 @@ private:
 		PARALLEL_LIGHT,		// parallel light
 	};
 
+	// settings
+	int scrWidth = 800;
+	int scrHeight = 600;
+
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
 	GLFWwindow* glWindow = nullptr;
 
 	Shader* pShader = nullptr;
@@ -23,16 +30,9 @@ private:
 	Floor* floor = nullptr;
 	Cow* cow = nullptr;
 	PointLight* ptLight = nullptr;
-
-	// settings
-	int scrWidth  = 800;
-	int scrHeight = 600;
-
-	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;
+	std::vector<glm::vec3> colors;
 
 	CTRL_TARGET target = CTRL_TARGET::COW;
-	std::vector<glm::vec3> colors;
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
