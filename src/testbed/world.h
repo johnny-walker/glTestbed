@@ -19,7 +19,6 @@ private:
 	int scrWidth = 800;
 	int scrHeight = 600;
 
-	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
 	GLFWwindow* glWindow = nullptr;
@@ -55,7 +54,7 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
-	void processInput();
+	void processInput(float deltaTime = 0.f);
 };
 #endif //WORLD_H
 

@@ -19,8 +19,7 @@ bool World::init()
     glfwSetCursorPosCallback(glWindow, mouse_callback);
     glfwSetScrollCallback(glWindow, scroll_callback);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return false;
     }
@@ -64,10 +63,10 @@ void World::render()
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
         float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
+        float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        processInput();
+        processInput(deltaTime);
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -88,7 +87,7 @@ void World::terminate()
     glfwTerminate();
 }
 
-void World::processInput()
+void World::processInput(float deltaTime)
 {
     if (glfwGetKey(glWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(glWindow, true);
