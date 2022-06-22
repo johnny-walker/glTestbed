@@ -23,15 +23,14 @@ private:
 	float lastFrame = 0.0f;
 
 	GLFWwindow* glWindow = nullptr;
-
 	Shader* pShader = nullptr;
 	Camera* pCamera = nullptr;
 
 	//scene
-	Floor* pFloor = nullptr;
-	Cow* pCow = nullptr;
 	PointLight* pPtLight = nullptr;
 	ParallelLight* pParalLight = nullptr;
+	Floor* pFloor = nullptr;
+	Cow* pCow = nullptr;
 
 	//control targets
 	CTRL_TARGET target = CTRL_TARGET::COW;

@@ -13,7 +13,8 @@ protected:
 public:
 	Light(int width, int height) :
 		BaseObject(width, height) {}
-	~Light() {
+	~Light() 
+	{
 		colors.clear();
 	}
 
@@ -25,7 +26,7 @@ public:
 	void setStrength(float value = 1.f);
 
 private:
-	int adjustLight = 0;	// flag to indicate{0:reset, 1:+, 2:-}
+	int adjustLight = 0;	// control flag {0:reset, 1:+, 2:-}
 
 	void setPrimaryColor(int index);
 	void adjustStrength(float delta = 1.f);

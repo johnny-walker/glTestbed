@@ -25,23 +25,27 @@ void Light::setPrimaryColor(int index)
 {
     if (index >=0 && index <= 8) 
         lightColor = colors[index];
+    dirty = true;
 }
 
 void Light::setColor(glm::vec3 color)
 {
     lightColor = color;
+    dirty = true;
 }
 
 void Light::setStrength(float value) 
 {
     strength = value;
     strength = min(max(strength, 0.f), 1.f);
+    dirty = true;
 }
 
 void Light::adjustStrength(float delta)
 {
     strength += delta;
     strength = min(max(strength, 0.f), 1.f);  
+    dirty = true;
 }
 
 void Light::processLight(GLFWwindow* glWindow)
@@ -78,4 +82,5 @@ void Light::processLight(GLFWwindow* glWindow)
         adjustStrength(-0.1f);
         adjustLight = 0;
     }
+    dirty = true;
 }

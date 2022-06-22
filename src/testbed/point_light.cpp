@@ -58,7 +58,7 @@ void PointLight::initSphere()
             float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
             float yPos = std::cos(ySegment * PI);
             float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
-            glm::vec3 scaledPos = pos + glm::vec3(xPos, yPos, zPos) * scale;
+            glm::vec3 scaledPos = pos + glm::vec3(xPos, yPos, zPos) * scale * strength;
             positions.push_back(scaledPos);
             uv.push_back(glm::vec2(xSegment, ySegment));
             normals.push_back(glm::vec3(xPos, yPos, zPos));
