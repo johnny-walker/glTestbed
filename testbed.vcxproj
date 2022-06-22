@@ -385,6 +385,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\testbed\light.cpp" />
     <ClCompile Include="src\testbed\object.cpp" />
     <ClCompile Include="src\testbed\cow.cpp" />
     <ClCompile Include="src\testbed\floor.cpp" />
@@ -397,6 +398,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <None Include="src\testbed\world.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\testbed\light.h" />
     <ClInclude Include="src\testbed\object.h" />
     <ClInclude Include="src\testbed\cow.h" />
     <ClInclude Include="src\testbed\floor.h" />

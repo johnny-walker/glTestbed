@@ -16,8 +16,11 @@
     <ClCompile Include="src\testbed\cow.cpp">
       <Filter>Src\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\testbed\light.cpp">
+      <Filter>Src\Scene\lights</Filter>
+    </ClCompile>
     <ClCompile Include="src\testbed\point_light.cpp">
-      <Filter>Src\Scene</Filter>
+      <Filter>Src\Scene\lights</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +41,9 @@
     <Filter Include="Src\Scene">
       <UniqueIdentifier>{5075b9d0-a14f-4070-9b49-68dfe7720939}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src\Scene\lights">
+      <UniqueIdentifier>{ba0f50d0-fd6b-44d6-bf48-8e99c1d6b0d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\testbed\world.h">
@@ -55,8 +61,11 @@
     <ClInclude Include="src\testbed\cow.h">
       <Filter>Src\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="src\testbed\light.h">
+      <Filter>Src\Scene\lights</Filter>
+    </ClInclude>
     <ClInclude Include="src\testbed\point_light.h">
-      <Filter>Src\Scene</Filter>
+      <Filter>Src\Scene\lights</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

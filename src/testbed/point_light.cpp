@@ -2,15 +2,16 @@
 
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
-    pCurShader = pShader;
-    pCurCamera = pCamera;
+    Light::init(pShader, pCamera);
 }
 
 void PointLight::render()
 {
+    Light::render();
+
     pCurShader->use();
     pCurShader->setVec3("lightPos", pos);
-    pCurShader->setVec3("lightColor", lightColor);
+    pCurShader->setVec3("lightColor", lightColor*strength);
 
     // create mvp 
     glm::mat4 projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
@@ -33,10 +34,6 @@ void PointLight::render()
     pCurShader->setInt("renderMode", 0);
 }
 
-void PointLight::setColor(glm::vec3 color)
-{
-    lightColor = color;
-}
 
 void PointLight::initSphere()
 {

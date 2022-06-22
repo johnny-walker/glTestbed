@@ -12,17 +12,6 @@ bool World::init()
     LASTY = scrHeight / 2.f;
     INIT_MOUSE = true;
  
-    // init colors
-    colors.push_back(glm::vec3(1.f, 1.f, 1.f));         //white (255, 255, 255)
-    colors.push_back(glm::vec3(1.f, 0.f, 0.f));         //red (255, 0, 0)
-    colors.push_back(glm::vec3(1.f, 165.f/255.f, 0.f)); //orange (255, 165, 0)
-    colors.push_back(glm::vec3(1.f, 1.f, 0.f));         //yellow (255,255,0)
-    colors.push_back(glm::vec3(0.f, 0.5f, 0.f));        //green (0,128,0)
-    colors.push_back(glm::vec3(0.f, 1.f, 1.f));         //cyan (0,255,255)
-    colors.push_back(glm::vec3(0.f, 0.f, 1.f));         //blue (0,0,255)
-    colors.push_back(glm::vec3(0.5f, 0.f, 0.5f));       //purple (128,0,128)
-    colors.push_back(glm::vec3(1.f, 0.f, 1.f));         //magenta (255, 0, 255)
-
     // init openGL
     glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwMakeContextCurrent(glWindow);
@@ -43,19 +32,19 @@ bool World::init()
     pCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
 
     // create scene objects
-    floor = new Floor(scrWidth, scrHeight);
-    floor->init(pShader, pCamera);
+    pFloor = new Floor(scrWidth, scrHeight);
+    pFloor->init(pShader, pCamera);
 
-    cow = new Cow(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
-    cow->setAngle(glm::radians(150.f));
-    cow->setPos(0.f, 0.25f, 0.f);
-    cow->init(pShader, pCamera);
+    pCow = new Cow(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    pCow->setAngle(glm::radians(150.f));
+    pCow->setPos(0.f, 0.25f, 0.f);
+    pCow->init(pShader, pCamera);
 
     // init light attributes
-    ptLight = new PointLight(scrWidth, scrHeight);
-    ptLight->setPos(1.f, 1.f, 2.f);
-    ptLight->setColor(glm::vec3(1.f, 1.f, 1.f));
-    ptLight->init(pShader, pCamera);
+    pPtLight = new PointLight(scrWidth, scrHeight);
+    pPtLight->setPos(1.f, 1.f, 2.f);
+    pPtLight->setColor(glm::vec3(1.f, 1.f, 1.f));
+    pPtLight->init(pShader, pCamera);
 
     return true;
 }
@@ -76,9 +65,9 @@ void World::render()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ptLight->render();
-        floor->render();
-        cow->render();
+        pPtLight->render();
+        pFloor->render();
+        pCow->render();
    
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
@@ -110,77 +99,94 @@ void World::processInput()
     switch (target) {
     case CTRL_TARGET::COW:
         if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-            cow->updateAngle(deltaTime);        //counter clockwise
+            pCow->updateAngle(deltaTime);        //counter clockwise
         } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-            cow->updateAngle(-deltaTime);       //clockwise
+            pCow->updateAngle(-deltaTime);       //clockwise
         } else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            cow->updatePos(deltaTime, 0, 0);    //x:left
+            pCow->updatePos(deltaTime, 0, 0);    //x:left
         } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            cow->updatePos(-deltaTime, 0, 0);   //x:right
+            pCow->updatePos(-deltaTime, 0, 0);   //x:right
         } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-            cow->updatePos(0, deltaTime, 0);    //y:up
+            pCow->updatePos(0, deltaTime, 0);    //y:up
         } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-            cow->updatePos(0, -deltaTime, 0);   //y:down
+            pCow->updatePos(0, -deltaTime, 0);   //y:down
         } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            cow->updatePos(0, 0, deltaTime);    //z:ahead
+            pCow->updatePos(0, 0, deltaTime);    //z:ahead
         } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
-            cow->updatePos(0, 0, -deltaTime);   //z:back
+            pCow->updatePos(0, 0, -deltaTime);   //z:back
         }
         break;
     case CTRL_TARGET::POINT_LIGHT:
         if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            ptLight->updatePos(deltaTime, 0, 0);    //x:left
+            pPtLight->updatePos(deltaTime, 0, 0);    //x:left
         }
         else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            ptLight->updatePos(-deltaTime, 0, 0);   //x:right
+            pPtLight->updatePos(-deltaTime, 0, 0);   //x:right
         }
         else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-            ptLight->updatePos(0, deltaTime, 0);    //y:up
+            pPtLight->updatePos(0, deltaTime, 0);    //y:up
         }
         else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-            ptLight->updatePos(0, -deltaTime, 0);   //y:down
+            pPtLight->updatePos(0, -deltaTime, 0);   //y:down
         }
         else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            ptLight->updatePos(0, 0, deltaTime);    //z:ahead
+            pPtLight->updatePos(0, 0, deltaTime);    //z:ahead
         }
         else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
-            ptLight->updatePos(0, 0, -deltaTime);   //z:back
+            pPtLight->updatePos(0, 0, -deltaTime);   //z:back
         }
         break;
+    case CTRL_TARGET::PARALLEL_LIGHT:
+        //todo
     default:
         break;
     }
-
-    if (glfwGetKey(glWindow, GLFW_KEY_0) == GLFW_PRESS) {
-        ptLight->setColor(colors[0]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_1) == GLFW_PRESS) {
-        ptLight->setColor(colors[1]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_2) == GLFW_PRESS) {
-        ptLight->setColor(colors[2]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_3) == GLFW_PRESS) {
-        ptLight->setColor(colors[3]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_4) == GLFW_PRESS) {
-        ptLight->setColor(colors[4]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_5) == GLFW_PRESS) {
-        ptLight->setColor(colors[5]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_6) == GLFW_PRESS) {
-        ptLight->setColor(colors[6]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_7) == GLFW_PRESS) {
-        ptLight->setColor(colors[7]);
-    } else if (glfwGetKey(glWindow, GLFW_KEY_8) == GLFW_PRESS) {
-        ptLight->setColor(colors[8]);
+    if (pCtrlLight) {
+        // adjust primary color
+        if (glfwGetKey(glWindow, GLFW_KEY_0) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(0);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_1) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(1);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_2) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(2);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_3) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(3);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_4) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(4);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_5) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(5);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_6) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(6);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_7) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(7);
+        } else if (glfwGetKey(glWindow, GLFW_KEY_8) == GLFW_PRESS) {
+            pCtrlLight->setPrimaryColor(8);
+        }
+        // adjust light strength
+        if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+            adjustLight = 1;    //+
+        } else if (glfwGetKey(glWindow, GLFW_KEY_MINUS) == GLFW_PRESS) {
+            adjustLight = 2;    //-
+        } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 1) {
+            pCtrlLight->adjustStrength(0.1f);
+            adjustLight = 0;
+        } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 2) {
+            pCtrlLight->adjustStrength(-0.1f); 
+            adjustLight = 0;
+        }
     }
-    
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
         target = CTRL_TARGET::COW;
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
+        pCtrlLight = nullptr;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         target = CTRL_TARGET::POINT_LIGHT;
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
+        pCtrlLight = pPtLight;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
+        //todo
         target = CTRL_TARGET::PARALLEL_LIGHT;
-    }        
+        pCtrlLight = nullptr;
+    }
 }
 
 void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)

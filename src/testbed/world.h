@@ -27,12 +27,14 @@ private:
 	Camera* pCamera = nullptr;
 
 	//scene
-	Floor* floor = nullptr;
-	Cow* cow = nullptr;
-	PointLight* ptLight = nullptr;
-	std::vector<glm::vec3> colors;
+	Floor* pFloor = nullptr;
+	Cow* pCow = nullptr;
+	PointLight* pPtLight = nullptr;
 
+	//control targets
 	CTRL_TARGET target = CTRL_TARGET::COW;
+	Light* pCtrlLight = nullptr;
+	int adjustLight = 0;
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
@@ -41,7 +43,6 @@ public:
 		scrHeight = height;
 	}
 	~World() {
-		colors.clear();
 	}
 
 public:
