@@ -25,13 +25,11 @@ void Light::setPrimaryColor(int index)
 {
     if (index >=0 && index <= 8) 
         lightColor = colors[index];
-    dirty = true;
 }
 
 void Light::setColor(glm::vec3 color)
 {
     lightColor = color;
-    dirty = true;
 }
 
 void Light::setStrength(float value) 

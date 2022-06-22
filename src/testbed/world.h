@@ -42,6 +42,10 @@ public:
 		scrHeight = height;
 	}
 	~World() {
+		delete pPtLight;
+		delete pParalLight;
+		delete pFloor;
+		delete pCow;
 	}
 
 public:
