@@ -42,9 +42,16 @@ bool World::init()
 
     // init light attributes
     pPtLight = new PointLight(scrWidth, scrHeight);
-    pPtLight->setPos(1.f, 1.f, 2.f);
-    pPtLight->setColor(glm::vec3(1.f, 1.f, 1.f));
+    pPtLight->setPos(-1.f, 1.f, 2.f);
+    pPtLight->setColor(glm::vec3(1.f, 1.f, 0.f));       // yellow
+    pPtLight->setStrength(0.8f);      
     pPtLight->init(pShader, pCamera);
+
+    pParalLight = new ParallelLight(scrWidth, scrHeight);
+    pParalLight->setDirection(glm::vec3(1.f, 2.f, 1.f));     
+    pParalLight->setColor(glm::vec3(1.f, 1.f, 1.f));    // white
+    pParalLight->setStrength(1.f);
+    pParalLight->init(pShader, pCamera);
 
     return true;
 }
@@ -66,6 +73,7 @@ void World::render()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         pPtLight->render();
+        pParalLight->render();
         pFloor->render();
         pCow->render();
    
@@ -76,7 +84,6 @@ void World::render()
 
 void World::terminate() 
 {
-    // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
 }
 
@@ -98,83 +105,22 @@ void World::processInput()
     // hotkey controls for models/lights
     switch (target) {
     case CTRL_TARGET::COW:
-        if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-            pCow->updateAngle(deltaTime);        //counter clockwise
-        } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-            pCow->updateAngle(-deltaTime);       //clockwise
-        } else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            pCow->updatePos(deltaTime, 0, 0);    //x:left
-        } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            pCow->updatePos(-deltaTime, 0, 0);   //x:right
-        } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-            pCow->updatePos(0, deltaTime, 0);    //y:up
-        } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-            pCow->updatePos(0, -deltaTime, 0);   //y:down
-        } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            pCow->updatePos(0, 0, deltaTime);    //z:ahead
-        } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
-            pCow->updatePos(0, 0, -deltaTime);   //z:back
-        }
+        pCow->processInput(glWindow, deltaTime);
         break;
     case CTRL_TARGET::POINT_LIGHT:
-        if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            pPtLight->updatePos(deltaTime, 0, 0);    //x:left
-        }
-        else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            pPtLight->updatePos(-deltaTime, 0, 0);   //x:right
-        }
-        else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-            pPtLight->updatePos(0, deltaTime, 0);    //y:up
-        }
-        else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-            pPtLight->updatePos(0, -deltaTime, 0);   //y:down
-        }
-        else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            pPtLight->updatePos(0, 0, deltaTime);    //z:ahead
-        }
-        else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
-            pPtLight->updatePos(0, 0, -deltaTime);   //z:back
-        }
+        pPtLight->processInput(glWindow, deltaTime);
         break;
     case CTRL_TARGET::PARALLEL_LIGHT:
-        //todo
+        pParalLight->processInput(glWindow, deltaTime);
+        break;
     default:
         break;
     }
+
     if (pCtrlLight) {
-        // adjust primary color
-        if (glfwGetKey(glWindow, GLFW_KEY_0) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(0);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_1) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(1);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_2) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(2);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_3) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(3);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_4) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(4);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_5) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(5);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_6) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(6);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_7) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(7);
-        } else if (glfwGetKey(glWindow, GLFW_KEY_8) == GLFW_PRESS) {
-            pCtrlLight->setPrimaryColor(8);
-        }
-        // adjust light strength
-        if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-            adjustLight = 1;    //+
-        } else if (glfwGetKey(glWindow, GLFW_KEY_MINUS) == GLFW_PRESS) {
-            adjustLight = 2;    //-
-        } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 1) {
-            pCtrlLight->adjustStrength(0.1f);
-            adjustLight = 0;
-        } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 2) {
-            pCtrlLight->adjustStrength(-0.1f); 
-            adjustLight = 0;
-        }
+        pCtrlLight->processLight(glWindow);
     }
+
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
         target = CTRL_TARGET::COW;
@@ -183,9 +129,8 @@ void World::processInput()
         target = CTRL_TARGET::POINT_LIGHT;
         pCtrlLight = pPtLight;
     } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
-        //todo
         target = CTRL_TARGET::PARALLEL_LIGHT;
-        pCtrlLight = nullptr;
+        pCtrlLight = pParalLight;
     }
 }
 

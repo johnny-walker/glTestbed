@@ -32,8 +32,50 @@ void Light::setColor(glm::vec3 color)
     lightColor = color;
 }
 
-void Light::adjustStrength(float value)
+void Light::setStrength(float value) 
 {
-    strength += value;
+    strength = value;
+    strength = min(max(strength, 0.f), 1.f);
+}
+
+void Light::adjustStrength(float delta)
+{
+    strength += delta;
     strength = min(max(strength, 0.f), 1.f);  
+}
+
+void Light::processLight(GLFWwindow* glWindow)
+{
+    // adjust primary color
+    if (glfwGetKey(glWindow, GLFW_KEY_0) == GLFW_PRESS) {
+        setPrimaryColor(0);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_1) == GLFW_PRESS) {
+        setPrimaryColor(1);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_2) == GLFW_PRESS) {
+        setPrimaryColor(2);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_3) == GLFW_PRESS) {
+        setPrimaryColor(3);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_4) == GLFW_PRESS) {
+        setPrimaryColor(4);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_5) == GLFW_PRESS) {
+        setPrimaryColor(5);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_6) == GLFW_PRESS) {
+        setPrimaryColor(6);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_7) == GLFW_PRESS) {
+        setPrimaryColor(7);
+    } else if (glfwGetKey(glWindow, GLFW_KEY_8) == GLFW_PRESS) {
+        setPrimaryColor(8);
+    }
+    // adjust light strength
+    if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+        adjustLight = 1;    //+
+    } else if (glfwGetKey(glWindow, GLFW_KEY_MINUS) == GLFW_PRESS) {
+        adjustLight = 2;    //-
+    } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 1) {
+        adjustStrength(0.1f);
+        adjustLight = 0;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_EQUAL) == GLFW_RELEASE && adjustLight == 2) {
+        adjustStrength(-0.1f);
+        adjustLight = 0;
+    }
 }

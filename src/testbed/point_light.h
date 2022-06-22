@@ -4,6 +4,12 @@
 
 class PointLight : public Light
 {
+private:
+	// drawing 
+	unsigned int sphereVAO = 0;
+	int indexCount = 0;
+	float scale = 0.1f;
+
 public:
 	PointLight(int width, int height) :
 		Light(width, height) {}
@@ -11,14 +17,11 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
+	void processInput(GLFWwindow* glWindow, float delta=0);
 
 private:
-	// drawing 
-	unsigned int sphereVAO = 0;
-	int indexCount = 0;
-	float scale = 0.1f;
-
 	void initSphere();
+
 };
 #endif //POINT_LIGHT_H
 

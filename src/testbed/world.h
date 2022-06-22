@@ -4,6 +4,7 @@
 #include "floor.h"
 #include "cow.h"
 #include "point_light.h"
+#include "parallel_light.h"
 
 class World
 {
@@ -30,11 +31,11 @@ private:
 	Floor* pFloor = nullptr;
 	Cow* pCow = nullptr;
 	PointLight* pPtLight = nullptr;
+	ParallelLight* pParalLight = nullptr;
 
 	//control targets
 	CTRL_TARGET target = CTRL_TARGET::COW;
 	Light* pCtrlLight = nullptr;
-	int adjustLight = 0;
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {

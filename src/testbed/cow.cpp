@@ -26,4 +26,25 @@ void Cow::render()
     spot->Draw(*pCurShader);
 }
 
+void Cow::processInput(GLFWwindow* glWindow, float delta)
+{
+    if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
+        updateAngle(delta);        //counter clockwise
+    } else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
+        updateAngle(-delta);       //clockwise
+    } else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        updatePos(delta, 0, 0);    //x:left
+    } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        updatePos(-delta, 0, 0);   //x:right
+    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        updatePos(0, delta, 0);    //y:up
+    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        updatePos(0, -delta, 0);   //y:down
+    } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        updatePos(0, 0, delta);    //z:ahead
+    } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+        updatePos(0, 0, -delta);   //z:back
+    }
+}
+
 

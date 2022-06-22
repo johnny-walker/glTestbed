@@ -10,8 +10,8 @@ void PointLight::render()
     Light::render();
 
     pCurShader->use();
-    pCurShader->setVec3("lightPos", pos);
-    pCurShader->setVec3("lightColor", lightColor*strength);
+    pCurShader->setVec3("PointLightPos", pos);
+    pCurShader->setVec3("PointLightColor", lightColor*strength);
 
     // create mvp 
     glm::mat4 projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
@@ -33,7 +33,6 @@ void PointLight::render()
     //restore to default
     pCurShader->setInt("renderMode", 0);
 }
-
 
 void PointLight::initSphere()
 {
@@ -119,4 +118,22 @@ void PointLight::initSphere()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
+}
+
+// process keyboard 
+void PointLight::processInput(GLFWwindow* glWindow, float delta)
+{
+    if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            updatePos(delta, 0, 0);    //x:left
+    } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        updatePos(-delta, 0, 0);   //x:right
+    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        updatePos(0, delta, 0);    //y:up
+    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        updatePos(0, -delta, 0);   //y:down
+    } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        updatePos(0, 0, delta);    //z:ahead
+    } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+        updatePos(0, 0, -delta);   //z:back
+    }
 }
