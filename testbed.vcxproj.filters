@@ -13,7 +13,7 @@
     <ClCompile Include="src\testbed\floor.cpp">
       <Filter>Src\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\testbed\cow.cpp">
+    <ClCompile Include="src\testbed\model_base.cpp">
       <Filter>Src\Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\testbed\light.cpp">
@@ -61,7 +61,7 @@
     <ClInclude Include="src\testbed\opengl.h">
       <Filter>Src</Filter>
     </ClInclude>
-    <ClInclude Include="src\testbed\cow.h">
+    <ClInclude Include="src\testbed\model_base.h">
       <Filter>Src\Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\testbed\light.h">

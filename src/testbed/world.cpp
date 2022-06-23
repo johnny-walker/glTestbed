@@ -28,20 +28,25 @@ bool World::init()
 
     // init shaders
     pShader = new Shader("world.vs", "world.fs");
-    pCamera = new Camera(glm::vec3(0.0f, 0.0f, 10.f));
+    pCamera = new Camera(glm::vec3(1.0f, 1.0f, 10.f));
 
     // create scene objects
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShader, pCamera);
 
-    pCow = new Cow(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
-    pCow->setAngle(glm::radians(150.f));
+    pCow = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    pCow->setAngle(glm::radians(210.f));
     pCow->setPos(0.f, 0.25f, 0.f);
     pCow->init(pShader, pCamera);
 
+    pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
+    pRobot->setAngle(glm::radians(-30.f));
+    pRobot->setPos(3.f, 0.f, -2.f);
+    pRobot->init(pShader, pCamera);
+
     // init light attributes
     pPtLight = new PointLight(scrWidth, scrHeight);
-    pPtLight->setPos(-3.f, 1.5f, 2.f);
+    pPtLight->setPos(-2.f, 3.f, 2.f);
     pPtLight->setColor(glm::vec3(1.f, 0.75f, 0.f));      // orange
     pPtLight->setStrength(1.f);      
     pPtLight->init(pShader, pCamera);
@@ -57,15 +62,15 @@ bool World::init()
 
 void World::render() 
 {
-    pShader->use();
-    pShader->setInt("RenderMode", 0);
-    pShader->setInt("LightingModel", 0);
-    pShader->setVec3("ViewPos", pCamera->Position);
-
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!glfwWindowShouldClose(glWindow)) {
+        pShader->use();
+        pShader->setInt("RenderMode", 0);
+        pShader->setInt("LightingModel", lightModel);
+        pShader->setVec3("ViewPos", pCamera->Position);
+
         // per-frame time dalta
         float currentFrame = static_cast<float>(glfwGetTime());
         float deltaTime = currentFrame - lastFrame;
@@ -81,7 +86,8 @@ void World::render()
         pDirLight->render();
         pFloor->render();
         pCow->render();
-   
+        pRobot->render();
+
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }
@@ -112,10 +118,13 @@ void World::processInput(float deltaTime)
     case CTRL_TARGET::COW:
         pCow->processInput(glWindow, deltaTime);
         break;
+    case CTRL_TARGET::ROBOT:
+        pRobot->processInput(glWindow, deltaTime);
+        break;
     case CTRL_TARGET::POINT_LIGHT:
         pPtLight->processInput(glWindow, deltaTime);
         break;
-    case CTRL_TARGET::PARALLEL_LIGHT:
+    case CTRL_TARGET::DIRECTION_LIGHT:
         pDirLight->processInput(glWindow, deltaTime);
         break;
     default:
@@ -132,11 +141,23 @@ void World::processInput(float deltaTime)
         target = CTRL_TARGET::COW;
         pCtrlLight = nullptr;
     } else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
+        target = CTRL_TARGET::ROBOT;
+        pCtrlLight = nullptr;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
         target = CTRL_TARGET::POINT_LIGHT;
         pCtrlLight = pPtLight;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
-        target = CTRL_TARGET::PARALLEL_LIGHT;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
+        target = CTRL_TARGET::DIRECTION_LIGHT;
         pCtrlLight = pDirLight;
+    }
+
+    // switch target object for hotkey controls
+    if (glfwGetKey(glWindow, GLFW_KEY_F9) == GLFW_PRESS) {
+        lightModel = 0;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
+        lightModel = 1;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
+        lightModel = 2;
     }
 }
 

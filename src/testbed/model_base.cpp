@@ -1,12 +1,12 @@
-#include "cow.h"
+#include "model_base.h"
 
-void Cow::init(Shader* pShader, Camera* pCamera)
+void BaseModel::init(Shader* pShader, Camera* pCamera)
 {
     pCurShader = pShader;
     pCurCamera = pCamera;
 }
 
-void Cow::render()
+void BaseModel::render()
 {
     pCurShader->use();
 
@@ -23,10 +23,10 @@ void Cow::render()
     model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
     pCurShader->setMat4("model", model);
 
-    spot->Draw(*pCurShader);
+    pModel->Draw(*pCurShader);
 }
 
-void Cow::processInput(GLFWwindow* glWindow, float delta)
+void BaseModel::processInput(GLFWwindow* glWindow, float delta)
 {
     if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
         updateAngle(delta);        //counter clockwise

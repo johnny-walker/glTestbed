@@ -387,7 +387,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="src\testbed\light.cpp" />
     <ClCompile Include="src\testbed\object.cpp" />
-    <ClCompile Include="src\testbed\cow.cpp" />
+    <ClCompile Include="src\testbed\model_base.cpp" />
     <ClCompile Include="src\testbed\floor.cpp" />
     <ClCompile Include="src\testbed\main.cpp" />
     <ClCompile Include="src\testbed\dir_light.cpp" />
@@ -401,7 +401,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClInclude Include="src\testbed\light.h" />
     <ClInclude Include="src\testbed\object.h" />
-    <ClInclude Include="src\testbed\cow.h" />
+    <ClInclude Include="src\testbed\model_base.h" />
     <ClInclude Include="src\testbed\floor.h" />
     <ClInclude Include="src\testbed\opengl.h" />
     <ClInclude Include="src\testbed\dir_light.h" />

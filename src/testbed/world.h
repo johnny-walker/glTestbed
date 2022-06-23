@@ -2,7 +2,7 @@
 #define WORLD_H
 #include "opengl.h"
 #include "floor.h"
-#include "cow.h"
+#include "model_base.h"
 #include "point_light.h"
 #include "dir_light.h"
 
@@ -11,8 +11,9 @@ class World
 private:
 	enum class CTRL_TARGET {
 		COW,				// model spot
+		ROBOT,				// model robot
 		POINT_LIGHT,		// point light
-		PARALLEL_LIGHT,		// parallel light
+		DIRECTION_LIGHT,	// direction light
 	};
 
 	// settings
@@ -29,11 +30,13 @@ private:
 	PointLight* pPtLight = nullptr;
 	DirLight* pDirLight = nullptr;
 	Floor* pFloor = nullptr;
-	Cow* pCow = nullptr;
+	BaseModel* pCow = nullptr;
+	BaseModel* pRobot = nullptr;
 
 	//control targets
 	CTRL_TARGET target = CTRL_TARGET::COW;
 	Light* pCtrlLight = nullptr;
+	int lightModel = 0;	//0:Phong, 1:Blinn-Phone, 2:PBR
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
@@ -46,6 +49,7 @@ public:
 		delete pDirLight;
 		delete pFloor;
 		delete pCow;
+		delete pRobot;
 	}
 
 public:
