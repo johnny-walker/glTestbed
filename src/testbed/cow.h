@@ -8,8 +8,7 @@ public:
 	Cow(int width, int height, string const& path, bool gamma = false) :
 		BaseObject(width, height)
 	{
-		//flip loaded texture's on the y-axis (st coordinate)
-		//stbi_set_flip_vertically_on_load(true);
+		stbi_set_flip_vertically_on_load(false);
 		spot = new Model(path, gamma);
 	}
 	~Cow() 

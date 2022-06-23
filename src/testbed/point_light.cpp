@@ -22,7 +22,7 @@ void PointLight::render()
     pCurShader->setMat4("model", model);
     
     // draw 
-    pCurShader->setInt("renderMode", 1);
+    pCurShader->setInt("RenderMode", 1);
     if (dirty) {
         initSphere();
         dirty = false;
@@ -31,7 +31,7 @@ void PointLight::render()
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 
     //restore to default
-    pCurShader->setInt("renderMode", 0);
+    pCurShader->setInt("RenderMode", 0);
 }
 
 void PointLight::initSphere()

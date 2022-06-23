@@ -22,7 +22,7 @@
     <ClCompile Include="src\testbed\point_light.cpp">
       <Filter>Src\Scene\lights</Filter>
     </ClCompile>
-    <ClCompile Include="src\testbed\parallel_light.cpp">
+    <ClCompile Include="src\testbed\dir_light.cpp">
       <Filter>Src\Scene\lights</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,7 +70,7 @@
     <ClInclude Include="src\testbed\point_light.h">
       <Filter>Src\Scene\lights</Filter>
     </ClInclude>
-    <ClInclude Include="src\testbed\parallel_light.h">
+    <ClInclude Include="src\testbed\dir_light.h">
       <Filter>Src\Scene\lights</Filter>
     </ClInclude>
   </ItemGroup>

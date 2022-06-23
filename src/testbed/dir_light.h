@@ -1,16 +1,16 @@
-#ifndef PARALLEL_LIGHT_H
-#define PARALLEL_LIGHT_H
+#ifndef DIR_LIGHT_H
+#define DIR_LIGHT_H
 #include "light.h"
 
-class ParallelLight : public Light
+class DirLight : public Light
 {
 private:
 	glm::vec3 direction = glm::vec3(1.f, 1.f, 1.f);
 
 public:
-	ParallelLight(int width, int height) :
+	DirLight(int width, int height) :
 		Light(width, height) {}
-	~ParallelLight() {}
+	~DirLight() {}
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
@@ -20,5 +20,5 @@ public:
 	void updateDirection(float deltaX, float deltaY, float deltaZ);
 
 };
-#endif //PARALLEL_LIGHT_H
+#endif //DIR_LIGHT_H
 

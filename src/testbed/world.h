@@ -4,7 +4,7 @@
 #include "floor.h"
 #include "cow.h"
 #include "point_light.h"
-#include "parallel_light.h"
+#include "dir_light.h"
 
 class World
 {
@@ -27,7 +27,7 @@ private:
 
 	//scene
 	PointLight* pPtLight = nullptr;
-	ParallelLight* pParalLight = nullptr;
+	DirLight* pDirLight = nullptr;
 	Floor* pFloor = nullptr;
 	Cow* pCow = nullptr;
 
@@ -43,7 +43,7 @@ public:
 	}
 	~World() {
 		delete pPtLight;
-		delete pParalLight;
+		delete pDirLight;
 		delete pFloor;
 		delete pCow;
 	}

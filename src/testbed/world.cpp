@@ -28,7 +28,7 @@ bool World::init()
 
     // init shaders
     pShader = new Shader("world.vs", "world.fs");
-    pCamera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
+    pCamera = new Camera(glm::vec3(0.0f, 0.0f, 10.f));
 
     // create scene objects
     pFloor = new Floor(scrWidth, scrHeight);
@@ -41,16 +41,16 @@ bool World::init()
 
     // init light attributes
     pPtLight = new PointLight(scrWidth, scrHeight);
-    pPtLight->setPos(-1.f, 1.f, 2.f);
+    pPtLight->setPos(-3.f, 1.5f, 3.f);
     pPtLight->setColor(glm::vec3(1.f, 1.f, 0.f));       // yellow
-    pPtLight->setStrength(0.8f);      
+    pPtLight->setStrength(1.f);      
     pPtLight->init(pShader, pCamera);
 
-    pParalLight = new ParallelLight(scrWidth, scrHeight);
-    pParalLight->setDirection(glm::vec3(1.f, 2.f, 1.f));     
-    pParalLight->setColor(glm::vec3(1.f, 1.f, 1.f));    // white
-    pParalLight->setStrength(1.f);
-    pParalLight->init(pShader, pCamera);
+    pDirLight = new DirLight(scrWidth, scrHeight);
+    pDirLight->setDirection(glm::vec3(1.f, 2.f, 1.f));
+    pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));    // white
+    pDirLight->setStrength(1.f);
+    pDirLight->init(pShader, pCamera);
 
     return true;
 }
@@ -59,6 +59,9 @@ void World::render()
 {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    pShader->setInt("RenderMode", 0);
+    pShader->setInt("LightingModel", 0);
 
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
@@ -73,7 +76,7 @@ void World::render()
         
         // must render lights first (in front of objects)
         pPtLight->render();
-        pParalLight->render();
+        pDirLight->render();
         pFloor->render();
         pCow->render();
    
@@ -111,7 +114,7 @@ void World::processInput(float deltaTime)
         pPtLight->processInput(glWindow, deltaTime);
         break;
     case CTRL_TARGET::PARALLEL_LIGHT:
-        pParalLight->processInput(glWindow, deltaTime);
+        pDirLight->processInput(glWindow, deltaTime);
         break;
     default:
         break;
@@ -131,7 +134,7 @@ void World::processInput(float deltaTime)
         pCtrlLight = pPtLight;
     } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
         target = CTRL_TARGET::PARALLEL_LIGHT;
-        pCtrlLight = pParalLight;
+        pCtrlLight = pDirLight;
     }
 }
 
