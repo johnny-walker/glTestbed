@@ -41,14 +41,14 @@ bool World::init()
 
     // init light attributes
     pPtLight = new PointLight(scrWidth, scrHeight);
-    pPtLight->setPos(-3.f, 1.5f, 3.f);
-    pPtLight->setColor(glm::vec3(1.f, 1.f, 0.f));       // yellow
+    pPtLight->setPos(-3.f, 1.5f, 2.f);
+    pPtLight->setColor(glm::vec3(1.f, 0.75f, 0.f));      // orange
     pPtLight->setStrength(1.f);      
     pPtLight->init(pShader, pCamera);
 
     pDirLight = new DirLight(scrWidth, scrHeight);
     pDirLight->setDirection(glm::vec3(1.f, 2.f, 1.f));
-    pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));    // white
+    pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));      // white
     pDirLight->setStrength(1.f);
     pDirLight->init(pShader, pCamera);
 
@@ -57,11 +57,13 @@ bool World::init()
 
 void World::render() 
 {
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+    pShader->use();
     pShader->setInt("RenderMode", 0);
     pShader->setInt("LightingModel", 0);
+    pShader->setVec3("ViewPos", pCamera->Position);
+
+    // draw in wireframe
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
