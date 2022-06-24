@@ -1,16 +1,13 @@
 #include "world.h"
 World* thisWorld = nullptr;
-float LASTX = 0.f;
-float LASTY = 0.f;
-bool  INIT_MOUSE = true;
+float mouseLASTX = 0.f;
+float mouseLASTY = 0.f;
+bool  mousePRESS = true;
 
 bool World::init() 
 {
     // init global variables for callback
     thisWorld = this;
-    LASTX = scrWidth  / 2.f;
-    LASTY = scrHeight / 2.f;
-    INIT_MOUSE = true;
  
     // init openGL
     glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -171,23 +168,25 @@ void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void World::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+        mousePRESS = true;
         return;
     }
-
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
-    if (INIT_MOUSE) {
-        LASTX = xpos;
-        LASTY = ypos;
-        INIT_MOUSE = false;
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        if (mousePRESS) {
+            mouseLASTX = xpos;
+            mouseLASTY = ypos;
+            mousePRESS = false;
+        }
     }
 
-    float xoffset = xpos - LASTX;
-    float yoffset = LASTY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = xpos - mouseLASTX;
+    float yoffset = mouseLASTY - ypos; // reversed since y-coordinates go from bottom to top
 
-    LASTX = xpos;
-    LASTY = ypos;
+    mouseLASTX = xpos;
+    mouseLASTY = ypos;
 
     if (thisWorld)
         thisWorld->pCamera->ProcessMouseMovement(xoffset, yoffset);
@@ -198,4 +197,3 @@ void World::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (thisWorld)
         thisWorld->pCamera->ProcessMouseScroll(static_cast<float>(yoffset));
 }
-
