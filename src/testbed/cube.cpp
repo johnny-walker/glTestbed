@@ -69,7 +69,7 @@ void Cube::init(Shader* pShader, Camera* pCamera)
     //flip loaded texture's on the y-axis (st coordinate)
     stbi_set_flip_vertically_on_load(false);
     woodTexture = loadTexture("../../resources/textures/container2.png");
-    specularTexture = loadTexture("../../resources/textures/container2_specular.png.png");
+    specularTexture = loadTexture("../../resources/textures/container2_specular.png");
 }
 
 void Cube::render()
