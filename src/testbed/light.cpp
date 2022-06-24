@@ -2,8 +2,7 @@
 
 void Light::init(Shader* pShader, Camera* pCamera)
 {
-    pCurShader = pShader;
-    pCurCamera = pCamera;
+    BaseObject::init(pShader, pCamera);
 
     // init colors
     colors.push_back(glm::vec3(1.f, 1.f, 1.f));             //white (255, 255, 255)
@@ -19,6 +18,7 @@ void Light::init(Shader* pShader, Camera* pCamera)
 
 void Light::render()
 {
+    BaseObject::render();
 }
 
 void Light::setPrimaryColor(int index)

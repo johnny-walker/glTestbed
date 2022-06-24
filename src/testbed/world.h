@@ -2,6 +2,7 @@
 #define WORLD_H
 #include "opengl.h"
 #include "floor.h"
+#include "cube.h"
 #include "model_base.h"
 #include "point_light.h"
 #include "dir_light.h"
@@ -12,6 +13,7 @@ private:
 	enum class CTRL_TARGET {
 		COW,				// model spot
 		ROBOT,				// model robot
+		CUBE,				// cube
 		POINT_LIGHT,		// point light
 		DIRECTION_LIGHT,	// direction light
 	};
@@ -26,10 +28,13 @@ private:
 	Shader* pShader = nullptr;
 	Camera* pCamera = nullptr;
 
-	//scene
+	//lights
 	PointLight* pPtLight = nullptr;
 	DirLight* pDirLight = nullptr;
+
+	//scene
 	Floor* pFloor = nullptr;
+	Cube* pCube = nullptr;
 	BaseModel* pCow = nullptr;
 	BaseModel* pRobot = nullptr;
 
@@ -48,6 +53,7 @@ public:
 		delete pPtLight;
 		delete pDirLight;
 		delete pFloor;
+		delete pCube;
 		delete pCow;
 		delete pRobot;
 	}

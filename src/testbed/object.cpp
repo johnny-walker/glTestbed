@@ -1,5 +1,34 @@
 #include "object.h"
 
+void BaseObject::init(Shader* pShader, Camera* pCamera)
+{
+    pCurShader = pShader;
+    pCurCamera = pCamera;
+}
+
+void BaseObject::render()
+{
+    pCurShader->use();
+
+    // create mvp 
+    projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
+    view = pCurCamera->GetViewMatrix();
+    model = glm::mat4(1.0f);
+
+    model = glm::scale(model, glm::vec3(scale));
+    model = glm::translate(model, pos);
+    model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    pCurShader->setMat4("projection", projection);
+    pCurShader->setMat4("view", view);
+    pCurShader->setMat4("model", model);
+}
+
+void BaseObject::setScale(float value) {
+    scale = value;
+    dirty = true;
+}
+
 void BaseObject::setAngle(float rotate) {
     angle = rotate;
     dirty = true;
@@ -58,3 +87,33 @@ unsigned int BaseObject::loadTexture(char const* path)
 
     return textureID;
 }
+
+
+void BaseObject::processInput(GLFWwindow* glWindow, float delta)
+{
+    if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
+        updateAngle(delta);        //counter clockwise
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
+        updateAngle(-delta);       //clockwise
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        updatePos(-delta, 0, 0);    //x:left
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        updatePos(delta, 0, 0);   //x:right
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
+        updatePos(0, delta, 0);    //y:up
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
+        updatePos(0, -delta, 0);   //y:down
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        updatePos(0, 0, delta);    //z:ahead
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
+        updatePos(0, 0, -delta);   //z:back
+    }
+}
+

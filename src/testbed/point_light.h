@@ -8,7 +8,7 @@ private:
 	// drawing 
 	unsigned int sphereVAO = 0;
 	int indexCount = 0;
-	float scale = 0.15f;
+	float drawScale = 0.15f;
 
 public:
 	PointLight(int width, int height) :
@@ -17,7 +17,6 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-	void processInput(GLFWwindow* glWindow, float delta=0);
 
 private:
 	void initSphere();

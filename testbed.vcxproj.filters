@@ -25,6 +25,9 @@
     <ClCompile Include="src\testbed\dir_light.cpp">
       <Filter>Src\Scene\lights</Filter>
     </ClCompile>
+    <ClCompile Include="src\testbed\cube.cpp">
+      <Filter>Src\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\testbed\world.fs">
@@ -72,6 +75,9 @@
     </ClInclude>
     <ClInclude Include="src\testbed\dir_light.h">
       <Filter>Src\Scene\lights</Filter>
+    </ClInclude>
+    <ClInclude Include="src\testbed\cube.h">
+      <Filter>Src\Scene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

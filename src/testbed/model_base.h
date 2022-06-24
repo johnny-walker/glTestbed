@@ -19,7 +19,6 @@ public:
 public:
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-	void processInput(GLFWwindow* glWindow, float delta);
 
 private:
 	Model* pModel = nullptr;

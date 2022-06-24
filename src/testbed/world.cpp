@@ -25,34 +25,40 @@ bool World::init()
 
     // init shaders
     pShader = new Shader("world.vs", "world.fs");
-    pCamera = new Camera(glm::vec3(1.0f, 1.0f, 10.f));
+    pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
 
     // create scene objects
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShader, pCamera);
 
     pCow = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    pCow->init(pShader, pCamera);
     pCow->setAngle(glm::radians(210.f));
     pCow->setPos(0.f, 0.25f, 0.f);
-    pCow->init(pShader, pCamera);
 
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
-    pRobot->setAngle(glm::radians(-30.f));
-    pRobot->setPos(3.f, 0.f, -2.f);
     pRobot->init(pShader, pCamera);
+    pRobot->setAngle(glm::radians(-45.f));
+    pRobot->setPos(3.f, 0.f, -1.f);
+    
+    pCube = new Cube(scrWidth, scrHeight);
+    pCube->init(pShader, pCamera);
+    pCube->setAngle(glm::radians(60.f));
+    pCube->setPos(-5.f, 0.f, -3.0);
+    pCube->setScale(0.5f);
 
     // init light attributes
     pPtLight = new PointLight(scrWidth, scrHeight);
-    pPtLight->setPos(-2.f, 3.f, 2.f);
-    pPtLight->setColor(glm::vec3(1.f, 0.75f, 0.f));      // orange
-    pPtLight->setStrength(1.f);      
     pPtLight->init(pShader, pCamera);
+    pPtLight->setPos(-1.f, 1.5f, 1.5f);
+    pPtLight->setColor(glm::vec3(1.f, 1.f, 1.f));      // white
+    pPtLight->setStrength(1.f);      
 
     pDirLight = new DirLight(scrWidth, scrHeight);
+    pDirLight->init(pShader, pCamera);
     pDirLight->setDirection(glm::vec3(1.f, 2.f, 1.f));
     pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));      // white
-    pDirLight->setStrength(1.f);
-    pDirLight->init(pShader, pCamera);
+    pDirLight->setStrength(0.3f);
 
     return true;
 }
@@ -82,6 +88,7 @@ void World::render()
         pPtLight->render();
         pDirLight->render();
         pFloor->render();
+        pCube->render();
         pCow->render();
         pRobot->render();
 
@@ -118,6 +125,9 @@ void World::processInput(float deltaTime)
     case CTRL_TARGET::ROBOT:
         pRobot->processInput(glWindow, deltaTime);
         break;
+    case CTRL_TARGET::CUBE:
+        pCube->processInput(glWindow, deltaTime);
+        break;
     case CTRL_TARGET::POINT_LIGHT:
         pPtLight->processInput(glWindow, deltaTime);
         break;
@@ -139,6 +149,9 @@ void World::processInput(float deltaTime)
         pCtrlLight = nullptr;
     } else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         target = CTRL_TARGET::ROBOT;
+        pCtrlLight = nullptr;
+    } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
+        target = CTRL_TARGET::CUBE;
         pCtrlLight = nullptr;
     } else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
         target = CTRL_TARGET::POINT_LIGHT;

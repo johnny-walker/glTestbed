@@ -2,8 +2,7 @@
 
 void Floor::init(Shader* pShader, Camera* pCamera)
 {
-    pCurShader = pShader;
-    pCurCamera = pCamera;
+    BaseObject::init(pShader, pCamera);
 
     float planeVertices[] = {
         // positions            // normals         // texcoords
@@ -39,21 +38,14 @@ void Floor::init(Shader* pShader, Camera* pCamera)
 
 void Floor::render()
 {
-    pCurShader->use();
+    BaseObject::render();
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, woodTexture);
 
-    // create mvp 
-    glm::mat4 projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
-    glm::mat4 view = pCurCamera->GetViewMatrix();
-    glm::mat4 model = glm::mat4(1.0f);
-    pCurShader->setMat4("projection", projection);
-    pCurShader->setMat4("view", view);
-    pCurShader->setMat4("model", model);
-
     // draw 
     glBindVertexArray(planeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }

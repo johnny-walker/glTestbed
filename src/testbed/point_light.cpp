@@ -13,14 +13,6 @@ void PointLight::render()
     pCurShader->setVec3("PointLightPos", pos);
     pCurShader->setVec3("PointLightColor", lightColor*strength);
 
-    // create mvp 
-    glm::mat4 projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
-    glm::mat4 view = pCurCamera->GetViewMatrix();
-    glm::mat4 model = glm::mat4(1.0f);
-    pCurShader->setMat4("projection", projection);
-    pCurShader->setMat4("view", view);
-    pCurShader->setMat4("model", model);
-    
     // draw 
     pCurShader->setInt("RenderMode", 1);
     if (dirty) {
@@ -29,6 +21,7 @@ void PointLight::render()
     }
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 
     //restore to default
     pCurShader->setInt("RenderMode", 0);
@@ -58,7 +51,7 @@ void PointLight::initSphere()
             float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
             float yPos = std::cos(ySegment * PI);
             float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
-            glm::vec3 scaledPos = pos + glm::vec3(xPos, yPos, zPos) * scale * strength;
+            glm::vec3 scaledPos = pos + glm::vec3(xPos, yPos, zPos) * drawScale * strength;
             positions.push_back(scaledPos);
             uv.push_back(glm::vec2(xSegment, ySegment));
             normals.push_back(glm::vec3(xPos, yPos, zPos));
@@ -118,22 +111,4 @@ void PointLight::initSphere()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
-}
-
-// process keyboard 
-void PointLight::processInput(GLFWwindow* glWindow, float delta)
-{
-    if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            updatePos(delta, 0, 0);    //x:left
-    } else if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        updatePos(-delta, 0, 0);   //x:right
-    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        updatePos(0, delta, 0);    //y:up
-    } else if (glfwGetKey(glWindow, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        updatePos(0, -delta, 0);   //y:down
-    } else if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        updatePos(0, 0, delta);    //z:ahead
-    } else if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS) {
-        updatePos(0, 0, -delta);   //z:back
-    }
 }

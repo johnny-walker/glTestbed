@@ -14,7 +14,6 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-	void processInput(GLFWwindow* glWindow, float delta = 0);
 
 	void setDirection(glm::vec3 dir);
 	void updateDirection(float deltaX, float deltaY, float deltaZ);
