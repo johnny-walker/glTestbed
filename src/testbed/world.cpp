@@ -76,7 +76,7 @@ bool World::init()
 
     pDirLight = new DirLight(scrWidth, scrHeight);
     pDirLight->init(pShader, pCamera);
-    pDirLight->setPos(1.f, 2.f, 5.f);
+    pDirLight->setPos(1.f, 2.f, 4.f);
     pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));//white
     pDirLight->setStrength(1.f);
 
@@ -105,11 +105,15 @@ void World::render()
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        // 1st pass, generate shadow map (from light's perspective)
+
+        // render scene
+        glm::mat4 lgtSpcMtrx = glm::mat4(1.f);
+        float nearPlane = 1.f, farPlane = 10.f;
+
+        // 1st pass, generate shadow map from light's perspective
         setShader(pShaderShadow);
-        float nearPlane = 1.0f, farPlane = 7.5f;
-        configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
+        lgtSpcMtrx = configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
+        pShaderShadow->setMat4("lightSpaceMatrix", lgtSpcMtrx);
 
         glViewport(0, 0, scrWidth, scrHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -119,7 +123,8 @@ void World::render()
 
         // 2nd pass, render scene with shadow map
         setShader(pShader);
-        //glViewport(0, 0, scrWidth, scrHeight);
+        pShader->setMat4("lightSpaceMatrix", lgtSpcMtrx);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -130,7 +135,6 @@ void World::render()
             pShaderQuad->use();
             pShaderQuad->setFloat("NearPlane", nearPlane);
             pShaderQuad->setFloat("FarPlane", farPlane);
-
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, depthMap);
             renderQuad();
@@ -144,8 +148,8 @@ void World::render()
 void World::setShader(Shader* pShader)
 {
     pShader->use();
-    pDirLight->setShader(pShader);
     pPtLight->setShader(pShader);
+    pDirLight->setShader(pShader);
     pFloor->setShader(pShader);
     pCube->setShader(pShader);
     pCow->setShader(pShader);
@@ -154,12 +158,12 @@ void World::setShader(Shader* pShader)
 
 void World::renderScene()
 {
-    pPtLight->render();
+    //pPtLight->render();
     pDirLight->render();
     pFloor->render();
     pCube->render();
     pCow->render();
-    pRobot->render();
+    //pRobot->render();
 }
 
 void World::terminate() 
@@ -169,34 +173,32 @@ void World::terminate()
 
 void World::initShadowMapTexture()
 {
-    glGenFramebuffers(1, &depthMapFBO);
-    glGenTextures(1, &depthMap);
+    if (depthMapFBO == 0) {
+        glGenFramebuffers(1, &depthMapFBO);
+        glGenTextures(1, &depthMap);
 
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
-        GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
+            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
-void World::configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane)
+glm::mat4 World::configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane)
 {
     glm::mat4 lightProjection, lightView;
-    glm::mat4 lightSpaceMatrix;
     lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
     lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    lightSpaceMatrix = lightProjection * lightView;
-
-    // render scene from light's point of view
-    pShaderShadow->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    return lightProjection * lightView;
 }
 
 // renderQuad() renders a 1x1 XY quad in NDC

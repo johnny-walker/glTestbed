@@ -22,7 +22,7 @@ uniform vec3 DirLightColor;
 
 // render control flags
 uniform int RenderMode;     
-uniform int LightingModel;  //0:Phong, 1:Blinn Phone, 2:PBR
+uniform int LightingModel;  
 
 // constant
 float abmient_weight = 0.05f;
@@ -46,12 +46,11 @@ float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir)
     return shadow;
 }
 
-vec3 Phong_Lighting(vec3 norm, vec3 viewDir) 
+vec3 PointLighting(vec3 norm, vec3 viewDir) 
 {
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
-    
-    // point light
+
     // diffuse shading
     vec3 lightDir = normalize(PointLightPos - fs_in.WorldPos); 
     float cosTheta = max(dot(norm, lightDir), 0.0);
@@ -65,58 +64,14 @@ vec3 Phong_Lighting(vec3 norm, vec3 viewDir)
     vec3 diffuse = diffuse_weight * cosTheta * vec3(diffuseTex);
     vec3 specular = specular_weight * spec * vec3(spacularTex);
     
-    vec3 ptLight = (ambient + diffuse + specular) * PointLightColor;
-
-    // direction light
-    // diffuse shading
-    lightDir = normalize(DirLightDir);
-    cosTheta = max(dot(norm, lightDir), 0.0);
-
-    // specular shading
-    reflectDir = reflect(-lightDir, norm);
-    spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-
-    // direction light combined results
-    ambient = abmient_weight * vec3(diffuseTex);
-    diffuse = diffuse_weight * cosTheta * vec3(diffuseTex);
-    specular = specular_weight * spec * vec3(spacularTex);
-    
-    vec3 dirLight = (ambient + diffuse + specular) * DirLightColor;
-
-    return ptLight + dirLight;
+    return (ambient + diffuse + specular) * PointLightColor;
 }
 
-vec3 Phong_PtLight(vec3 norm, vec3 viewDir) 
+vec3 DirectionLighting(vec3 norm, vec3 viewDir) 
 {
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
-    
-    // point light
-    // diffuse shading
-    vec3 lightDir = normalize(PointLightPos - fs_in.WorldPos); 
-    float cosTheta = max(dot(norm, lightDir), 0.0);
-    
-    // specular shading
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    
-    // point light combined results
-    vec3 ambient = abmient_weight * vec3(diffuseTex);
-    vec3 diffuse = diffuse_weight * cosTheta * vec3(diffuseTex);
-    vec3 specular = specular_weight * spec * vec3(spacularTex);
-    
-    float shadow = ShadowCalculation(fs_in.WorldPosLightSpace, lightDir);       
-    vec3 ptLight = (ambient + (1.0 - shadow) * (diffuse + specular)) * PointLightColor;
-    
-    return ptLight;
-}
-
-vec3 Phong_DirLight(vec3 norm, vec3 viewDir) 
-{
-    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
-    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
-    
-    // direction light
+  
     // diffuse shading
     vec3 lightDir = normalize(DirLightDir);
     float cosTheta = max(dot(norm, lightDir), 0.0);
@@ -130,21 +85,22 @@ vec3 Phong_DirLight(vec3 norm, vec3 viewDir)
     vec3 diffuse = diffuse_weight * cosTheta * vec3(diffuseTex);
     vec3 specular = specular_weight * spec * vec3(spacularTex);
     
-    float shadow = ShadowCalculation(fs_in.WorldPosLightSpace, lightDir);       
+    float shadow = ShadowCalculation(fs_in.WorldPosLightSpace, lightDir);
+    return  (ambient + (1.f-shadow)*(diffuse + specular)) * DirLightColor;
+}
 
-    vec3 dirLight = (ambient + (1.0 - shadow) * (diffuse + specular)) * PointLightColor;
-    
-    return dirLight;
+vec3 Phong_Lighting(vec3 norm, vec3 viewDir) 
+{
+    vec3 ptLight = PointLighting(norm, viewDir);
+    vec3 dirLight = DirectionLighting(norm, viewDir);
+    return ptLight + dirLight;
 }
 
 void main()
 {    
     if (RenderMode == 1) {
-        // draw point light only
+        // draw point light sphere only
         FragColor = vec4(PointLightColor, 1.0);
-        return;
-    } else if (RenderMode == 2) {
-        // generate shadow map
         return;
     }
 
@@ -155,10 +111,10 @@ void main()
     if (LightingModel == 0) {
         result = Phong_Lighting(norm, viewDir);
     } else if (LightingModel == 1) {
-        result = Phong_PtLight(norm, viewDir);
+        result = PointLighting(norm, viewDir);
     } else if (LightingModel == 2) {
-        result = Phong_DirLight(norm, viewDir);
-    
+        result = DirectionLighting(norm, viewDir);
     }
+
     FragColor = vec4(result, 1.0);
 }

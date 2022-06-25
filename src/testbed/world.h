@@ -68,11 +68,10 @@ private:
 
 	Shader* pShaderShadow = nullptr;
 	Shader* pShaderQuad = nullptr;
-
 	bool showDepthMap = false;
 
 	void initShadowMapTexture();
-	void configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane);
+	glm::mat4 configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane);
 	void renderQuad();
 };
 #endif //WORLD_H
