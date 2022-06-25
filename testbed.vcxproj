@@ -396,6 +396,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="src\testbed\world.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\testbed\debug_quad.fs" />
+    <None Include="src\testbed\debug_quad.vs" />
+    <None Include="src\testbed\shadow_mapping.fs" />
+    <None Include="src\testbed\shadow_mapping.vs" />
     <None Include="src\testbed\world.fs" />
     <None Include="src\testbed\world.vs" />
   </ItemGroup>

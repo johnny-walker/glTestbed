@@ -12,8 +12,8 @@ protected:
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 model = glm::mat4(1.0f);
 
-	int scr_width  = 0;
-	int scr_height = 0;
+	int scrWidth  = 0;
+	int scrHeight = 0;
 	
 	float scale = 1.f;
 	float angle = 0.f;
@@ -23,10 +23,15 @@ protected:
 public:
 	BaseObject(int width, int height) 
 	{
-		scr_width  = width;
-		scr_height = height;
+		scrWidth  = width;
+		scrHeight = height;
 	}
 	~BaseObject() {}
+
+public:
+	virtual void init(Shader* pShader, Camera* pCamera);
+	virtual void render();
+	virtual void setShader(Shader* pShader);
 
 public:
 	void setScale(float value);									//init scale
@@ -34,10 +39,12 @@ public:
 	void setPos(float posX, float posY, float posZ);			//init pos
 	void updateAngle(float delta);								//delta
 	void updatePos(float deltaX, float deltaY, float deltaZ);	//delta
-	void processInput(GLFWwindow* glWindow, float delta);
 
-	virtual void init(Shader* pShader, Camera* pCamera);
-	virtual void render();
+	float getScale();
+	float getAngle();
+	glm::vec3 getPos();
+
+	void processInput(GLFWwindow* glWindow, float delta);
 
 protected:
 	unsigned int loadTexture(char const* path);

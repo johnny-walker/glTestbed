@@ -23,10 +23,12 @@ void Light::render()
 
 void Light::setPrimaryColor(int index)
 {
-    if (index >= 0 && index <= 8)
+    if (index >= 0 && index <= 8) {
         lightColor = colors[index];
-    else if (index == 9) //random color
+    } else if (index == 9) {
+        //random color
         lightColor = glm::vec3((rand() % 256) / 255.f, (rand() % 256) / 255.f, (rand() % 256) / 255.f);
+    }
 }
 
 void Light::setColor(glm::vec3 color)

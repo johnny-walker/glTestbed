@@ -41,7 +41,7 @@ private:
 	//control targets
 	CTRL_TARGET target = CTRL_TARGET::COW;
 	Light* pCtrlLight = nullptr;
-	int lightModel = 0;	//0:Phong, 1:Blinn-Phone, 2:PBR
+	int lightModel = 0;	
 
 public:
 	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
@@ -68,7 +68,23 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
+	void setShader(Shader* pShader);
+	void renderScene();
 	void processInput(float deltaTime = 0.f);
+
+private:
+	// shadow map
+	unsigned int quadVAO = 0;
+	unsigned int quadVBO = 0;
+	unsigned int depthMapFBO = 0;
+	unsigned int depthMap = 0;
+
+	Shader* pShaderShadow = nullptr;
+	Shader* pShaderQuad = nullptr;
+
+	void initShadowMapTexture();
+	void configShadowMap(glm::vec3 lightPos);
+	void renderQuad();
 };
 #endif //WORLD_H
 

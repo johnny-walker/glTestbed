@@ -5,6 +5,7 @@ void PointLight::init(Shader* pShader, Camera* pCamera)
     Light::init(pShader, pCamera);
 }
 
+
 void PointLight::render()
 {
     Light::render();
@@ -13,7 +14,7 @@ void PointLight::render()
     pCurShader->setVec3("PointLightPos", pos);
     pCurShader->setVec3("PointLightColor", lightColor*strength);
 
-    // draw 
+    // draw light 
     pCurShader->setInt("RenderMode", 1);
     if (dirty) {
         initSphere();

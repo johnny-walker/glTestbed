@@ -11,7 +11,7 @@ void BaseObject::render()
     pCurShader->use();
 
     // create mvp 
-    projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(pCurCamera->Zoom), (float)scrWidth / (float)scrHeight, 0.1f, 100.0f);
     view = pCurCamera->GetViewMatrix();
     model = glm::mat4(1.0f);
 
@@ -22,6 +22,11 @@ void BaseObject::render()
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
     pCurShader->setMat4("model", model);
+}
+
+void BaseObject::setShader(Shader* pShader)
+{
+    pCurShader = pShader;
 }
 
 void BaseObject::setScale(float value) {
@@ -53,6 +58,20 @@ void BaseObject::updatePos(float deltaX, float deltaY, float deltaZ) {
     dirty = true;
 }
 
+float BaseObject::getScale()
+{
+    return scale;
+}
+
+float BaseObject::getAngle()
+{
+    return angle;
+}
+
+glm::vec3 BaseObject::getPos()
+{
+    return pos;
+}
 unsigned int BaseObject::loadTexture(char const* path)
 {
     unsigned int textureID=0;

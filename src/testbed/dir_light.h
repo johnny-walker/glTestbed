@@ -4,9 +4,6 @@
 
 class DirLight : public Light
 {
-private:
-	glm::vec3 direction = glm::vec3(1.f, 1.f, 1.f);
-
 public:
 	DirLight(int width, int height) :
 		Light(width, height) {}
@@ -14,10 +11,6 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-
-	void setDirection(glm::vec3 dir);
-	void updateDirection(float deltaX, float deltaY, float deltaZ);
-
 };
 #endif //DIR_LIGHT_H
 
