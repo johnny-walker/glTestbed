@@ -26,8 +26,8 @@ uniform int LightingModel;
 
 // constant
 float abmient_weight = 0.05f;
-float diffuse_weight = 0.8f;
-float specular_weight = 0.15f;
+float diffuse_weight = 0.85f;
+float specular_weight = 0.1f;
 float shininess = 64.f;
 
 float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir) 
@@ -56,8 +56,8 @@ vec3 PointLighting(vec3 norm, vec3 viewDir)
     float cosTheta = max(dot(norm, lightDir), 0.0);
     
     // specular shading
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), shininess);
     
     // point light combined results
     vec3 ambient = abmient_weight * vec3(diffuseTex);
@@ -77,8 +77,8 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir)
     float cosTheta = max(dot(norm, lightDir), 0.0);
 
     // specular shading
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), shininess);
 
     // direction light combined results
     vec3 ambient = abmient_weight * vec3(diffuseTex);
@@ -89,7 +89,7 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir)
     return  (ambient + (1.f-shadow)*(diffuse + specular)) * DirLightColor;
 }
 
-vec3 Phong_Lighting(vec3 norm, vec3 viewDir) 
+vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir) 
 {
     vec3 ptLight = PointLighting(norm, viewDir);
     vec3 dirLight = DirectionLighting(norm, viewDir);
@@ -109,12 +109,11 @@ void main()
     vec3 viewDir = normalize(ViewPos - fs_in.WorldPos);
 
     if (LightingModel == 0) {
-        result = Phong_Lighting(norm, viewDir);
+        result = BlinnPhong_Lighting(norm, viewDir);
     } else if (LightingModel == 1) {
         result = PointLighting(norm, viewDir);
     } else if (LightingModel == 2) {
         result = DirectionLighting(norm, viewDir);
     }
-
     FragColor = vec4(result, 1.0);
 }

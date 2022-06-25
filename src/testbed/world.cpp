@@ -47,6 +47,16 @@ bool World::init()
     pShaderQuad = new Shader("debug_quad.vs", "debug_quad.fs");
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
 
+    pShader->use();
+    pShader->setInt("texture_diffuse", 0);
+    pShader->setInt("texture_specular", 1);
+    pShader->setInt("texture_normal", 2);
+    pShader->setInt("shadowMap", 3);
+
+    pShaderShadow->use();
+    pShaderShadow->setInt("texture_diffuse", 0);
+    pShaderShadow->setInt("shadowMap", 1);
+
     // create scene objects
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShader, pCamera);
@@ -59,7 +69,7 @@ bool World::init()
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
     pRobot->init(pShader, pCamera);
     pRobot->setAngle(glm::radians(-45.f));
-    pRobot->setPos(3.f, 0.f, -1.f);
+    pRobot->setPos(3.f, -0.5f, -1.f);
     
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShader, pCamera);
@@ -71,13 +81,13 @@ bool World::init()
     pPtLight = new PointLight(scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
     pPtLight->setPos(-1.f, 1.5f, 1.5f);
-    pPtLight->setColor(glm::vec3(0.f, 0.f, 1.f));//blue      
-    pPtLight->setStrength(0.5f);      
+    pPtLight->setPrimaryColor(2);   //orange      
+    pPtLight->setStrength(0.8f);      
 
     pDirLight = new DirLight(scrWidth, scrHeight);
     pDirLight->init(pShader, pCamera);
     pDirLight->setPos(1.f, 2.f, 4.f);
-    pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));//white
+    pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
 
     initShadowMapTexture();
@@ -158,12 +168,12 @@ void World::setShader(Shader* pShader)
 
 void World::renderScene()
 {
-    //pPtLight->render();
+    pPtLight->render();
     pDirLight->render();
     pFloor->render();
     pCube->render();
     pCow->render();
-    //pRobot->render();
+    pRobot->render();
 }
 
 void World::terminate() 

@@ -24,12 +24,11 @@ public:
 	void processLight(GLFWwindow* glWindow);
 	void setColor(glm::vec3 color);
 	void setStrength(float value = 1.f);
+	void setPrimaryColor(int index);
+	void adjustStrength(float delta = 1.f);
 
 private:
 	int adjustLight = 0;	// control flag {0:reset, 1:+, 2:-}
-
-	void setPrimaryColor(int index);
-	void adjustStrength(float delta = 1.f);
 };
 #endif //LIGHT_H
 
