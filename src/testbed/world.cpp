@@ -47,6 +47,7 @@ bool World::init()
     pShaderQuad = new Shader("debug_quad.vs", "debug_quad.fs");
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
 
+    // specify the texture maps
     pShader->use();
     pShader->setInt("texture_diffuse", 0);
     pShader->setInt("texture_specular", 1);
@@ -74,7 +75,7 @@ bool World::init()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShader, pCamera);
     pCube->setAngle(glm::radians(60.f));
-    pCube->setPos(-5.f, 0.f, -3.0);
+    pCube->setPos(-4.f, 0.f, -3.f);
     pCube->setScale(0.5f);
 
     // init light attributes
@@ -86,7 +87,7 @@ bool World::init()
 
     pDirLight = new DirLight(scrWidth, scrHeight);
     pDirLight->init(pShader, pCamera);
-    pDirLight->setPos(1.f, 2.f, 4.f);
+    pDirLight->setPos(2.f, 2.f, 3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
 
@@ -124,11 +125,12 @@ void World::render()
         setShader(pShaderShadow);
         lgtSpcMtrx = configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
         pShaderShadow->setMat4("lightSpaceMatrix", lgtSpcMtrx);
-
         glViewport(0, 0, scrWidth, scrHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
+            //glCullFace(GL_FRONT);
             renderScene();
+            //glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 2nd pass, render scene with shadow map
@@ -192,8 +194,8 @@ void World::initShadowMapTexture()
             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);

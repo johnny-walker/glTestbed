@@ -32,6 +32,7 @@ float shininess = 64.f;
 
 float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir) 
 {
+ 
     vec3 projCoords = worldPosLightSpace.xyz / worldPosLightSpace.w;
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
@@ -39,6 +40,8 @@ float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir)
     float closestDepth = texture(shadowMap, projCoords.xy).r; 
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
+    if(projCoords.z > 1.0)
+        return 0;
    
     float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
     // check whether current frag pos is in shadow
