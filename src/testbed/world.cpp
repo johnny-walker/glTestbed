@@ -4,6 +4,23 @@ float mouseLASTX = 0.f;
 float mouseLASTY = 0.f;
 bool  mousePRESS = true;
 
+World::World(GLFWwindow* window, int width, int height) 
+{
+    glWindow = window;
+    scrWidth = width;
+    scrHeight = height;
+}
+
+World::~World() 
+{
+    delete pPtLight;
+    delete pDirLight;
+    delete pFloor;
+    delete pCube;
+    delete pCow;
+    delete pRobot;
+}
+
 bool World::init() 
 {
     // init global variables for callback
@@ -54,12 +71,12 @@ bool World::init()
     pPtLight = new PointLight(scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
     pPtLight->setPos(-1.f, 1.5f, 1.5f);
-    pPtLight->setColor(glm::vec3(0.f, 1.f, 0.f));//green      
+    pPtLight->setColor(glm::vec3(0.f, 0.f, 1.f));//blue      
     pPtLight->setStrength(0.5f);      
 
     pDirLight = new DirLight(scrWidth, scrHeight);
     pDirLight->init(pShader, pCamera);
-    pDirLight->setPos(1.f, 2.f, 1.f);
+    pDirLight->setPos(1.f, 2.f, 5.f);
     pDirLight->setColor(glm::vec3(1.f, 1.f, 1.f));//white
     pDirLight->setStrength(1.f);
 
@@ -80,40 +97,44 @@ void World::render()
         lastFrame = currentFrame;
 
         processInput(deltaTime);
-
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        // 1st pass, generate shadow map
-        setShader(pShaderShadow);
-        configShadowMap(pDirLight->getPos());
-        glViewport(0, 0, scrWidth, scrHeight);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        renderScene();
-
-        // 2nd pass, render scene with shadow map
+        // update user inputs
         setShader(pShader);
         pShader->setInt("RenderMode", 0);
         pShader->setInt("LightingModel", lightModel);
         pShader->setVec3("ViewPos", pCamera->Position);
 
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        // 1st pass, generate shadow map (from light's perspective)
+        setShader(pShaderShadow);
+        float nearPlane = 1.0f, farPlane = 7.5f;
+        configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
+
+        glViewport(0, 0, scrWidth, scrHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            renderScene();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // 2nd pass, render scene with shadow map
+        setShader(pShader);
         //glViewport(0, 0, scrWidth, scrHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, depthMap);
         renderScene();
 
         // deubg, show depth map
-        float near_plane = 1.0f, far_plane = 7.5f;
-        pShaderQuad->use();
-        pShaderQuad->setFloat("near_plane", near_plane);
-        pShaderQuad->setFloat("far_plane", far_plane);
+        if (showDepthMap) {
+            pShaderQuad->use();
+            pShaderQuad->setFloat("NearPlane", nearPlane);
+            pShaderQuad->setFloat("FarPlane", farPlane);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        //renderQuad();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, depthMap);
+            renderQuad();
+        }
 
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
@@ -144,6 +165,66 @@ void World::renderScene()
 void World::terminate() 
 {
     glfwTerminate();
+}
+
+void World::initShadowMapTexture()
+{
+    glGenFramebuffers(1, &depthMapFBO);
+    glGenTextures(1, &depthMap);
+
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
+        GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void World::configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane)
+{
+    glm::mat4 lightProjection, lightView;
+    glm::mat4 lightSpaceMatrix;
+    lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
+    lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    lightSpaceMatrix = lightProjection * lightView;
+
+    // render scene from light's point of view
+    pShaderShadow->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+}
+
+// renderQuad() renders a 1x1 XY quad in NDC
+// -----------------------------------------
+void World::renderQuad()
+{
+    if (quadVAO == 0) {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }
 
 void World::processInput(float deltaTime)
@@ -191,16 +272,20 @@ void World::processInput(float deltaTime)
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
         target = CTRL_TARGET::COW;
         pCtrlLight = nullptr;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         target = CTRL_TARGET::ROBOT;
         pCtrlLight = nullptr;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
         target = CTRL_TARGET::CUBE;
         pCtrlLight = nullptr;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
         target = CTRL_TARGET::POINT_LIGHT;
         pCtrlLight = pPtLight;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
         target = CTRL_TARGET::DIRECTION_LIGHT;
         pCtrlLight = pDirLight;
     }
@@ -208,10 +293,19 @@ void World::processInput(float deltaTime)
     // switch lighting algorithms
     if (glfwGetKey(glWindow, GLFW_KEY_F9) == GLFW_PRESS) {
         lightModel = 0;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
         lightModel = 1;
-    } else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
         lightModel = 2;
+    }
+
+    if (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) {
+        showDepthMap = true;
+    }
+    else {
+        showDepthMap = false;
     }
 }
 
@@ -253,66 +347,4 @@ void World::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     if (thisWorld)
         thisWorld->pCamera->ProcessMouseScroll(static_cast<float>(yoffset));
-}
-
-void World::initShadowMapTexture()
-{
-    glGenFramebuffers(1, &depthMapFBO);
-    glGenTextures(1, &depthMap);
-
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
-        GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void World::configShadowMap(glm::vec3 lightPos)
-{
-    glm::mat4 lightProjection, lightView;
-    glm::mat4 lightSpaceMatrix;
-    float near_plane = 1.0f, far_plane = 7.5f;
-    lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-    lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    lightSpaceMatrix = lightProjection * lightView;
-
-    // render scene from light's point of view
-    pShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-}
-
-// renderQuad() renders a 1x1 XY quad in NDC
-// -----------------------------------------
-void World::renderQuad()
-{
-    if (quadVAO == 0)
-    {
-        float quadVertices[] = {
-            // positions        // texture Coords
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        };
-        // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
 }

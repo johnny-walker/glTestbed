@@ -7,17 +7,16 @@
 #include "point_light.h"
 #include "dir_light.h"
 
+enum class CTRL_TARGET {
+	COW,				// model spot
+	ROBOT,				// model robot
+	CUBE,				// cube
+	POINT_LIGHT,		// point light
+	DIRECTION_LIGHT,	// direction light
+};
+
 class World
 {
-private:
-	enum class CTRL_TARGET {
-		COW,				// model spot
-		ROBOT,				// model robot
-		CUBE,				// cube
-		POINT_LIGHT,		// point light
-		DIRECTION_LIGHT,	// direction light
-	};
-
 	// settings
 	int scrWidth = 800;
 	int scrHeight = 600;
@@ -44,21 +43,9 @@ private:
 	int lightModel = 0;	
 
 public:
-	World(GLFWwindow* window=nullptr, int width=800, int height=600) {
-		glWindow = window;
-		scrWidth = width;
-		scrHeight = height;
-	}
-	~World() {
-		delete pPtLight;
-		delete pDirLight;
-		delete pFloor;
-		delete pCube;
-		delete pCow;
-		delete pRobot;
-	}
+	World(GLFWwindow* window = nullptr, int width = 800, int height = 600);
+	~World();
 
-public:
 	bool init();
 	void render();
 	void terminate();
@@ -82,8 +69,10 @@ private:
 	Shader* pShaderShadow = nullptr;
 	Shader* pShaderQuad = nullptr;
 
+	bool showDepthMap = false;
+
 	void initShadowMapTexture();
-	void configShadowMap(glm::vec3 lightPos);
+	void configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane);
 	void renderQuad();
 };
 #endif //WORLD_H
