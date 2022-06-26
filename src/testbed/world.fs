@@ -30,9 +30,16 @@ float diffuse_weight = 0.85f;
 float specular_weight = 0.1f;
 float shininess = 64.f;
 
+// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
+vec2 poissonDisk[4] = vec2[](
+  vec2( -0.94201624, -0.39906216 ),
+  vec2( 0.94558609, -0.76890725 ),
+  vec2( -0.094184101, -0.92938870 ),
+  vec2( 0.34495938, 0.29387760 )
+);
+
 float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir) 
 {
- 
     vec3 projCoords = worldPosLightSpace.xyz / worldPosLightSpace.w;
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
@@ -41,12 +48,20 @@ float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir)
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     if(projCoords.z > 1.0)
-        return 0;
+        return 0.f;
    
     float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
     // check whether current frag pos is in shadow
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    float shadow = currentDepth - bias > closestDepth  ? 0.9f : 0.0;
+    //for (int i=0; i<4; i++){
+    //    float neighborDepth = texture(shadowMap, projCoords.xy + poissonDisk[i]/700.0 ).z;
+    //    if ( neighborDepth < currentDepth - bias ) {
+    //        shadow -= 0.1f;
+    //    }
+    //}
+    //shadow = max(min(shadow, 1.f), 0.f);
     return shadow;
+
 }
 
 vec3 PointLighting(vec3 norm, vec3 viewDir) 

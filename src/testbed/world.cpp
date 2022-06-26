@@ -118,13 +118,12 @@ void World::render()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render scene
-        glm::mat4 lgtSpcMtrx = glm::mat4(1.f);
-        float nearPlane = 1.f, farPlane = 10.f;
 
         // 1st pass, generate shadow map from light's perspective
+        float nearPlane = 1.f, farPlane = 7.5f;
         setShader(pShaderShadow);
-        lgtSpcMtrx = configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
-        pShaderShadow->setMat4("lightSpaceMatrix", lgtSpcMtrx);
+        glm::mat4 lsMtrx = configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
+        pShaderShadow->setMat4("lightSpaceMatrix", lsMtrx);
         glViewport(0, 0, scrWidth, scrHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -133,17 +132,16 @@ void World::render()
             //glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // 2nd pass, render scene with shadow map
-        setShader(pShader);
-        pShader->setMat4("lightSpaceMatrix", lgtSpcMtrx);
+        // 2nd pass, render scene or shadow map
+        if (!showDepthMap) {
+            setShader(pShader);
+            pShader->setMat4("lightSpaceMatrix", lsMtrx);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        renderScene();
-
-        // deubg, show depth map
-        if (showDepthMap) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, depthMap);
+            renderScene();
+        } else {
             pShaderQuad->use();
             pShaderQuad->setFloat("NearPlane", nearPlane);
             pShaderQuad->setFloat("FarPlane", farPlane);
