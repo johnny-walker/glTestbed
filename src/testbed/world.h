@@ -30,9 +30,9 @@ class World
 	BaseModel* pRobot = nullptr;
 
 	//control targets
+	int lightModel = 0;
 	BaseObject* pCtrlTarget = nullptr;
 	Light* pCtrlLight = nullptr;
-	int lightModel = 0;
 
 public:
 	World(GLFWwindow* window = nullptr, int width = 800, int height = 600);

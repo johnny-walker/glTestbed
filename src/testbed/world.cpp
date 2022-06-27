@@ -204,10 +204,14 @@ void World::setShader(Shader* pShader)
 
 void World::renderScene()
 {
-    for (int i = 0; i < ptLights.size(); i++)
-        ptLights[i]->render();
-    for (int i = 0; i < dirLights.size(); i++)
-        dirLights[i]->render();
+    if (lightModel == 0 || lightModel == 1) {
+        for (int i = 0; i < ptLights.size(); i++)
+            ptLights[i]->render();
+    }
+    if (lightModel == 0 || lightModel == 2) {
+        for (int i = 0; i < dirLights.size(); i++)
+            dirLights[i]->render();
+    }
     pFloor->render();
     pCube->render();
     pCow->render();
@@ -299,12 +303,15 @@ void World::processInput(float deltaTime)
 
     // switch lighting algorithms
     if (glfwGetKey(glWindow, GLFW_KEY_F9) == GLFW_PRESS) {
+        // all lights
         lightModel = 0;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
+        // point lights only
         lightModel = 1;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
+        // direction lights only
         lightModel = 2;
     }
 
