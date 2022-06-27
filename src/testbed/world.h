@@ -30,7 +30,6 @@ class World
 	BaseModel* pRobot = nullptr;
 
 	//control targets
-	//CTRL_TARGET target = CTRL_TARGET::COW;
 	BaseObject* pCtrlTarget = nullptr;
 	Light* pCtrlLight = nullptr;
 	int lightModel = 0;
@@ -56,15 +55,11 @@ private:
 	// shadow map
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
-	unsigned int depthMapFBO = 0;
-	unsigned int depthMap = 0;
 
 	Shader* pShaderShadow = nullptr;
 	Shader* pShaderQuad = nullptr;
 	bool showDepthMap = false;
 
-	void initShadowMapTexture();
-	glm::mat4 configShadowMap(glm::vec3 lightPos, float nearPlane, float farPlane);
 	void renderQuad();
 };
 #endif //WORLD_H

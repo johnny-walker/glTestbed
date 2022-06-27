@@ -6,6 +6,7 @@ class Light : public BaseObject
 {
 protected:
 	int identifier = 0;
+	glm::mat4 lightSpaceMtrx = glm::mat4(1.f);
 
 	// color
 	std::vector<glm::vec3> colors;
@@ -18,6 +19,9 @@ public:
 
 	virtual void init(Shader* pShader, Camera* pCamera);
 	virtual void render();
+
+	glm::mat4 createLightSpaceMatrix(float nearPlane, float farPlane);
+	glm::mat4 getLightSpaceMatrix();
 
 	int getId(int index);
 	void setColor(glm::vec3 color);
