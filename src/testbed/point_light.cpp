@@ -11,11 +11,12 @@ void PointLight::render()
     Light::render();
 
     pCurShader->use();
-    pCurShader->setVec3("PointLightPos", pos);
-    pCurShader->setVec3("PointLightColor", lightColor*strength);
+    pCurShader->setVec3("PointLightPos[" + std::to_string(identifier) + "]", pos);
+    pCurShader->setVec3("PointLightColor[" + std::to_string(identifier) + "]", lightColor*strength);
 
     // draw light 
     pCurShader->setInt("RenderMode", 1);
+    pCurShader->setInt("PointLightDrawId", identifier);
     if (dirty) {
         initSphere();
         dirty = false;

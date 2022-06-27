@@ -8,8 +8,7 @@ void DirLight::init(Shader* pShader, Camera* pCamera)
 void DirLight::render()
 {
     Light::render();
-
     pCurShader->use();
-    pCurShader->setVec3("DirLightDir", pos);
-    pCurShader->setVec3("DirLightColor", lightColor * strength);
+    pCurShader->setVec3("DirLightDir[" + std::to_string(identifier) + "]", pos);
+    pCurShader->setVec3("DirLightColor[" + std::to_string(identifier) + "]", lightColor * strength);
 }

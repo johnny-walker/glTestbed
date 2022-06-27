@@ -13,8 +13,8 @@ World::World(GLFWwindow* window, int width, int height)
 
 World::~World() 
 {
-    delete pPtLight;
-    delete pDirLight;
+    ptLights.clear();
+    dirLights.clear();
     delete pFloor;
     delete pCube;
     delete pCow;
@@ -66,6 +66,7 @@ bool World::init()
     pCow->init(pShader, pCamera);
     pCow->setAngle(glm::radians(210.f));
     pCow->setPos(0.f, 0.25f, 0.f);
+    pCtrlTarget = pCow;
 
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
     pRobot->init(pShader, pCamera);
@@ -78,18 +79,38 @@ bool World::init()
     pCube->setPos(-4.f, 0.f, -3.f);
     pCube->setScale(0.5f);
 
-    // init light attributes
-    pPtLight = new PointLight(scrWidth, scrHeight);
+    // init 2 point lights and 2 direction lights
+    pShader->use();
+    pShader->setInt("PointLightCount", 2);
+    pShader->setInt("DirLightCount", 2);
+
+    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
     pPtLight->setPos(-1.f, 1.5f, 1.5f);
     pPtLight->setPrimaryColor(2);   //orange      
-    pPtLight->setStrength(0.8f);      
+    pPtLight->setStrength(0.5f);
+    ptLights.push_back(pPtLight);
 
-    pDirLight = new DirLight(scrWidth, scrHeight);
+    pPtLight = new PointLight(1, scrWidth, scrHeight);
+    pPtLight->init(pShader, pCamera);
+    pPtLight->setPos(-1.f, 1.5f, -1.5f);
+    pPtLight->setPrimaryColor(4);   //green      
+    pPtLight->setStrength(0.5f);
+    ptLights.push_back(pPtLight);
+
+    DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
     pDirLight->init(pShader, pCamera);
     pDirLight->setPos(2.f, 2.f, 3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
+    dirLights.push_back(pDirLight);
+
+    pDirLight = new DirLight(1, scrWidth, scrHeight);
+    pDirLight->init(pShader, pCamera);
+    pDirLight->setPos(-2.f, 2.f, -3.f);
+    pDirLight->setPrimaryColor(1);  //red
+    pDirLight->setStrength(1.f);
+    dirLights.push_back(pDirLight);
 
     initShadowMapTexture();
 
@@ -122,7 +143,7 @@ void World::render()
         // 1st pass, generate shadow map from light's perspective
         float nearPlane = 1.f, farPlane = 7.5f;
         setShader(pShaderShadow);
-        glm::mat4 lsMtrx = configShadowMap(pDirLight->getPos(), nearPlane, farPlane);
+        glm::mat4 lsMtrx = configShadowMap(dirLights[0]->getPos(), nearPlane, farPlane);
         pShaderShadow->setMat4("lightSpaceMatrix", lsMtrx);
         glViewport(0, 0, scrWidth, scrHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -158,8 +179,11 @@ void World::render()
 void World::setShader(Shader* pShader)
 {
     pShader->use();
-    pPtLight->setShader(pShader);
-    pDirLight->setShader(pShader);
+    for (int i=0; i< ptLights.size(); i++)
+        ptLights[i]->setShader(pShader);
+    for (int i = 0; i < dirLights.size(); i++)
+        dirLights[i]->setShader(pShader);
+
     pFloor->setShader(pShader);
     pCube->setShader(pShader);
     pCow->setShader(pShader);
@@ -168,8 +192,10 @@ void World::setShader(Shader* pShader)
 
 void World::renderScene()
 {
-    pPtLight->render();
-    pDirLight->render();
+    for (int i = 0; i < ptLights.size(); i++)
+        ptLights[i]->render();
+    for (int i = 0; i < dirLights.size(); i++)
+        dirLights[i]->render();
     pFloor->render();
     pCube->render();
     pCow->render();
@@ -255,26 +281,9 @@ void World::processInput(float deltaTime)
         pCamera->ProcessKeyboard(RIGHT, deltaTime);
 
     // hotkey controls for models/lights
-    switch (target) {
-    case CTRL_TARGET::COW:
-        pCow->processInput(glWindow, deltaTime);
-        break;
-    case CTRL_TARGET::ROBOT:
-        pRobot->processInput(glWindow, deltaTime);
-        break;
-    case CTRL_TARGET::CUBE:
-        pCube->processInput(glWindow, deltaTime);
-        break;
-    case CTRL_TARGET::POINT_LIGHT:
-        pPtLight->processInput(glWindow, deltaTime);
-        break;
-    case CTRL_TARGET::DIRECTION_LIGHT:
-        pDirLight->processInput(glWindow, deltaTime);
-        break;
-    default:
-        break;
+    if (pCtrlTarget) {
+        pCtrlTarget->processInput(glWindow, deltaTime);
     }
-
     // adjust color
     if (pCtrlLight) {
         pCtrlLight->processLight(glWindow);
@@ -282,24 +291,28 @@ void World::processInput(float deltaTime)
 
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
-        target = CTRL_TARGET::COW;
+        pCtrlTarget = pCow;
         pCtrlLight = nullptr;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
-        target = CTRL_TARGET::ROBOT;
+        pCtrlTarget = pRobot;
         pCtrlLight = nullptr;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
-        target = CTRL_TARGET::CUBE;
+        pCtrlTarget = pCube;
         pCtrlLight = nullptr;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
-        target = CTRL_TARGET::POINT_LIGHT;
-        pCtrlLight = pPtLight;
+        pCtrlTarget = pCtrlLight = ptLights[0];
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
-        target = CTRL_TARGET::DIRECTION_LIGHT;
-        pCtrlLight = pDirLight;
+        pCtrlTarget = pCtrlLight = ptLights[1];
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F7) == GLFW_PRESS) {
+        pCtrlTarget = pCtrlLight = dirLights[0];
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F8) == GLFW_PRESS) {
+        pCtrlTarget = pCtrlLight = dirLights[1];
     }
 
     // switch lighting algorithms

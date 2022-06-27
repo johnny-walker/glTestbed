@@ -1,5 +1,16 @@
 #include "light.h"
 
+Light::Light(int id, int width, int height) :
+    BaseObject(width, height),
+    identifier(id)
+{
+}
+
+Light::~Light()
+{
+    colors.clear();
+}
+
 void Light::init(Shader* pShader, Camera* pCamera)
 {
     BaseObject::init(pShader, pCamera);
@@ -19,6 +30,11 @@ void Light::init(Shader* pShader, Camera* pCamera)
 void Light::render()
 {
     BaseObject::render();
+}
+
+int Light::getId(int index)
+{
+    return identifier;
 }
 
 void Light::setPrimaryColor(int index)

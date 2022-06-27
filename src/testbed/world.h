@@ -7,14 +7,6 @@
 #include "point_light.h"
 #include "dir_light.h"
 
-enum class CTRL_TARGET {
-	COW,				// model spot
-	ROBOT,				// model robot
-	CUBE,				// cube
-	POINT_LIGHT,		// point light
-	DIRECTION_LIGHT,	// direction light
-};
-
 class World
 {
 	// settings
@@ -28,8 +20,8 @@ class World
 	Camera* pCamera = nullptr;
 
 	//lights
-	PointLight* pPtLight = nullptr;
-	DirLight* pDirLight = nullptr;
+	std::vector<PointLight*> ptLights; 
+	std::vector<DirLight*> dirLights;
 
 	//scene
 	Floor* pFloor = nullptr;
@@ -38,9 +30,10 @@ class World
 	BaseModel* pRobot = nullptr;
 
 	//control targets
-	CTRL_TARGET target = CTRL_TARGET::COW;
+	//CTRL_TARGET target = CTRL_TARGET::COW;
+	BaseObject* pCtrlTarget = nullptr;
 	Light* pCtrlLight = nullptr;
-	int lightModel = 0;	
+	int lightModel = 0;
 
 public:
 	World(GLFWwindow* window = nullptr, int width = 800, int height = 600);

@@ -11,8 +11,8 @@ private:
 	float drawScale = 0.15f;
 
 public:
-	PointLight(int width, int height) :
-		Light(width, height) {}
+	PointLight(int id, int width, int height) :
+		Light(id, width, height) {}
 	~PointLight() {}
 
 	void init(Shader* pShader, Camera* pCamera);

@@ -5,8 +5,8 @@
 class DirLight : public Light
 {
 public:
-	DirLight(int width, int height) :
-		Light(width, height) {}
+	DirLight(int id, int width, int height) :
+		Light(id, width, height) {}
 	~DirLight() {}
 
 	void init(Shader* pShader, Camera* pCamera);
