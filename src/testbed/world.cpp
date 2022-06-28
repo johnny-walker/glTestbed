@@ -47,7 +47,7 @@ bool World::init()
     pShader = new Shader("world.vs", "world.fs");
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
     pShaderQuad = new Shader("quad.vs", "quad.fs");
-    pShaderCubemap = new Shader("cubemap.vs", "cubemap.fs", "cubemap.gs");
+    pShaderCubemap = new Shader("cubemap_depth.vs", "cubemap_depth.fs", "cubemap_depth.gs");
 
     // specify the texture maps
     pShader->use();
