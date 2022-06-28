@@ -16,7 +16,7 @@ protected:
 	int scrHeight = 0;
 	
 	float scale = 1.f;
-	float angle = 0.f;
+	glm::vec3 angle = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 pos = glm::vec3(0.0f, 0.0f ,0.0f);
 	bool dirty = true;	// flag if angle or pos changes
 
@@ -34,14 +34,14 @@ public:
 	virtual void setShader(Shader* pShader);
 
 public:
-	void setScale(float value);									//init scale
-	void setAngle(float rotate);								//init angle
-	void setPos(float posX, float posY, float posZ);			//init pos
-	void updateAngle(float delta);								//delta
-	void updatePos(float deltaX, float deltaY, float deltaZ);	//delta
+	void setScale(float value);	
+	void setAngle(float rotate, int axis = 1);   // axis {0:x, 1:y, 2:z}
+	void updateAngle(float delta, int axis = 1); // axis {0:x, 1:y, 2:z}						
+	void setPos(float posX, float posY, float posZ);
+	void updatePos(float deltaX, float deltaY, float deltaZ);
 
 	float getScale();
-	float getAngle();
+	glm::vec3 getAngle();
 	glm::vec3 getPos();
 
 	void processInput(GLFWwindow* glWindow, float delta);

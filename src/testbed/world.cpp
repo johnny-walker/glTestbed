@@ -19,6 +19,8 @@ World::~World()
     delete pCube;
     delete pCow;
     delete pRobot;
+    delete pBird;
+
 }
 
 bool World::init() 
@@ -63,7 +65,7 @@ bool World::init()
 
     pCow = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
     pCow->init(pShader, pCamera);
-    pCow->setAngle(glm::radians(210.f));
+    pCow->setAngle(glm::radians(210.f), 1);
     pCow->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pCow;
 
@@ -72,10 +74,18 @@ bool World::init()
     pRobot->setAngle(glm::radians(-45.f));
     pRobot->setPos(3.f, -0.5f, -1.f);
     
+    if (false) { //loading this model takes time, set false to save time
+        pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
+        pBird->init(pShader, pCamera);
+        pBird->setAngle(glm::radians(-90.f), 0);
+        pBird->setAngle(glm::radians(75.f), 2);
+        pBird->setPos(-25.f, -5.f, 5.f);
+        pBird->setScale(0.1f);
+    }
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShader, pCamera);
-    pCube->setAngle(glm::radians(60.f));
-    pCube->setPos(-4.f, 0.f, -3.f);
+    pCube->setAngle(glm::radians(60.f), 1);
+    pCube->setPos(-3.5f, 0.f, -3.5f);
     pCube->setScale(0.5f);
 
     // init 2 point lights and 2 direction lights
@@ -200,6 +210,8 @@ void World::setShader(Shader* pShader)
     pCube->setShader(pShader);
     pCow->setShader(pShader);
     pRobot->setShader(pShader);
+    if (pBird)
+        pBird->setShader(pShader);
 }
 
 void World::renderScene()
@@ -216,6 +228,8 @@ void World::renderScene()
     pCube->render();
     pCow->render();
     pRobot->render();
+    if (pBird)
+        pBird->render();
 }
 
 void World::terminate() 
@@ -278,15 +292,16 @@ void World::processInput(float deltaTime)
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
         pCtrlTarget = pCow;
-        pCtrlLight = nullptr;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         pCtrlTarget = pRobot;
-        pCtrlLight = nullptr;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
         pCtrlTarget = pCube;
-        pCtrlLight = nullptr;
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F4) == GLFW_PRESS) {
+        if (pBird)
+            pCtrlTarget = pBird;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
         pCtrlTarget = pCtrlLight = ptLights[0];

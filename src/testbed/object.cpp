@@ -17,7 +17,9 @@ void BaseObject::render()
 
     model = glm::scale(model, glm::vec3(scale));
     model = glm::translate(model, pos);
-    model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, angle.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, angle.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, angle.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
@@ -34,8 +36,18 @@ void BaseObject::setScale(float value) {
     dirty = true;
 }
 
-void BaseObject::setAngle(float rotate) {
-    angle = rotate;
+void BaseObject::setAngle(float rotate, int axis) {
+    switch (axis) {
+    case 0: //rotate by x
+        angle.x = rotate;
+        break;
+    case 1: //rotate by y
+        angle.y = rotate;
+        break;
+    case 2: //rotate by z
+        angle.z = rotate;
+        break;
+    }
     dirty = true;
 }
 
@@ -46,8 +58,18 @@ void BaseObject::setPos(float posX, float posY, float posZ) {
     dirty = true;
 }
 
-void BaseObject::updateAngle(float delta) {
-    angle += delta;
+void BaseObject::updateAngle(float delta, int axis) {
+    switch (axis) {
+    case 0: //rotate by x
+        angle.x += delta;
+        break;
+    case 1: //rotate by y
+        angle.y += delta;
+        break;
+    case 2: //rotate by z
+        angle.z += delta;
+        break;
+    }
     dirty = true;
 }
 
@@ -63,7 +85,7 @@ float BaseObject::getScale()
     return scale;
 }
 
-float BaseObject::getAngle()
+glm::vec3 BaseObject::getAngle()
 {
     return angle;
 }
