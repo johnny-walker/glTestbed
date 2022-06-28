@@ -19,8 +19,8 @@ World::~World()
     delete pCube;
     delete pCow;
     delete pRobot;
-    delete pBird;
-
+    if (pBird)
+        delete pBird;
 }
 
 bool World::init() 
@@ -46,8 +46,8 @@ bool World::init()
     // init shaders
     pShader = new Shader("world.vs", "world.fs");
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
-    pShaderQuad = new Shader("debug_quad.vs", "debug_quad.fs");
-    pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
+    pShaderQuad = new Shader("quad.vs", "quad.fs");
+    pShaderCubemap = new Shader("cubemap.vs", "cubemap.fs", "cubemap.gs");
 
     // specify the texture maps
     pShader->use();
@@ -58,6 +58,9 @@ bool World::init()
     pShaderShadow->use();
     pShaderShadow->setInt("texture_diffuse", 0);
     pShaderShadow->setInt("shadowMap", 1);
+
+    // init camera
+    pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
 
     // create scene objects
     pFloor = new Floor(scrWidth, scrHeight);
@@ -74,19 +77,21 @@ bool World::init()
     pRobot->setAngle(glm::radians(-45.f));
     pRobot->setPos(3.f, -0.5f, -1.f);
     
-    if (false) { //loading this model takes time, set false to save time
-        pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
-        pBird->init(pShader, pCamera);
-        pBird->setAngle(glm::radians(-90.f), 0);
-        pBird->setAngle(glm::radians(75.f), 2);
-        pBird->setPos(-25.f, -5.f, 5.f);
-        pBird->setScale(0.1f);
-    }
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShader, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
     pCube->setPos(-3.5f, 0.f, -3.5f);
     pCube->setScale(0.5f);
+
+    bool showBird = false; //loading bird takes time, false to save time
+    if (showBird) { 
+        pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
+        pBird->init(pShader, pCamera);
+        pBird->setAngle(glm::radians(-90.f), 0);
+        pBird->setAngle(glm::radians(75.f), 2);
+        pBird->setPos(-30.f, -6.f, 35.f);
+        pBird->setScale(0.08f);
+    }
 
     // init 2 point lights and 2 direction lights
     pShader->use();
@@ -146,7 +151,8 @@ void World::render()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // 1st pass, generate shadow map from light's perspective
+        // 1, genearte shadow mapping
+        // 1.1, generate direction light shadow map
         float nearPlane = 0.1f, farPlane = 10.5f;
         unsigned int depthMapFBO = 0;
         unsigned int depthMap = 0;
@@ -158,28 +164,51 @@ void World::render()
             pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
             depthMapFBO = dirLights[i]->getShadowMapFBO();
 
-            glViewport(0, 0, scrWidth, scrHeight);
             glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            renderScene();
+                glClear(GL_DEPTH_BUFFER_BIT);
+                renderScene();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
+        //1.2, generate point light cubemap shadow
+        unsigned int cubemapFBO = 0;
+        unsigned int cubemap = 0;
+        float ptNearPlane = 1.f, ptFarPlane = 25.f;
+        std::vector<glm::mat4> shadowMatrices;
+
+        setShader(pShaderCubemap);
+        for (int i = 0; i < ptLights.size(); i++) {
+            shadowMatrices = ptLights[i]->createLightSpaceMatrix(ptNearPlane, ptFarPlane);
+            pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
+            pShaderCubemap->setFloat("farPlane", ptFarPlane);
+            pShaderCubemap->setVec3("lightPos", ptLights[i]->getPos());
+            
+            cubemapFBO = ptLights[i]->getCubemapFBO();
+            glBindFramebuffer(GL_FRAMEBUFFER, cubemapFBO);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                renderScene();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+
+        // 2 
+        // 2.1, show direction light shadow map
+        // 2.2, render scene
         if (showDepthMap) {
+            // 2.1, show direction light shadow map
             pShaderQuad->use();
             pShaderQuad->setFloat("NearPlane", nearPlane);
             pShaderQuad->setFloat("FarPlane", farPlane);
-            for (int i=0; i< dirLights.size(); i++)
+            for (int i = 0; i < dirLights.size(); i++) {
                 if (pCtrlLight == dirLights[i]) {
                     depthMap = dirLights[i]->getShadowMap();
                     break;
                 }
-
+            }
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, depthMap);
             renderQuad();
         } else {
-            // 2nd pass, render scene or shadow map
+            // 2.2, render scene
             setShader(pShader);
             for (int i = 0; i < dirLights.size(); i++) {
                 lightMtrx = dirLights[i]->getLightSpaceMatrix();
@@ -191,8 +220,18 @@ void World::render()
                 glActiveTexture(GL_TEXTURE3 + i);
                 glBindTexture(GL_TEXTURE_2D, depthMap);
             }
+            pShader->setFloat("FarPlane", ptFarPlane);
+            for (int i = 0; i < ptLights.size(); i++) {
+                pShader->setInt("cubeMap" + std::to_string(i), 5 + i);
+                cubemap = ptLights[i]->getCubemap();
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glActiveTexture(GL_TEXTURE5 + i);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+            }
             renderScene();
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }
@@ -216,10 +255,12 @@ void World::setShader(Shader* pShader)
 
 void World::renderScene()
 {
+    // render point lights
     if (lightModel == 0 || lightModel == 1) {
         for (int i = 0; i < ptLights.size(); i++)
             ptLights[i]->render();
     }
+    // render direction lights
     if (lightModel == 0 || lightModel == 2) {
         for (int i = 0; i < dirLights.size(); i++)
             dirLights[i]->render();
@@ -318,15 +359,15 @@ void World::processInput(float deltaTime)
 
     // switch lighting algorithms
     if (glfwGetKey(glWindow, GLFW_KEY_F9) == GLFW_PRESS) {
-        // all lights
+        // turn on all lights
         lightModel = 0;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
-        // point lights only
+        // turn on point lights only
         lightModel = 1;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
-        // direction lights only
+        // turn on direction lights only
         lightModel = 2;
     }
 

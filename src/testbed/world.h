@@ -53,7 +53,7 @@ private:
 	void processInput(float deltaTime = 0.f);
 
 private:
-	// shadow map
+	// direction light shadow map
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
 
@@ -62,6 +62,11 @@ private:
 	bool showDepthMap = false;
 
 	void renderQuad();
+
+private:
+	// point light cubemap
+	Shader* pShaderCubemap = nullptr;
+
 };
 #endif //WORLD_H
 

@@ -36,16 +36,25 @@
     <None Include="src\testbed\world.vs">
       <Filter>Src\Shaders</Filter>
     </None>
-    <None Include="src\testbed\debug_quad.fs">
+    <None Include="src\testbed\quad.fs">
       <Filter>Src\Shaders</Filter>
     </None>
-    <None Include="src\testbed\debug_quad.vs">
+    <None Include="src\testbed\quad.vs">
       <Filter>Src\Shaders</Filter>
     </None>
     <None Include="src\testbed\shadow_mapping.fs">
       <Filter>Src\Shaders</Filter>
     </None>
     <None Include="src\testbed\shadow_mapping.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\cubemap_depth.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\cubemap_depth.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\cubemap_depth.gs">
       <Filter>Src\Shaders</Filter>
     </None>
   </ItemGroup>

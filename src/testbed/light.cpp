@@ -32,20 +32,6 @@ void Light::render()
     BaseObject::render();
 }
 
-glm::mat4 Light::createLightSpaceMatrix(float nearPlane, float farPlane)
-{
-    glm::mat4 lightProjection, lightView;
-    lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
-    lightView = glm::lookAt(pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    lightSpaceMtrx = lightProjection * lightView;
-    return lightSpaceMtrx;
-}
-
-glm::mat4 Light::getLightSpaceMatrix()
-{
-    return lightSpaceMtrx;
-}
-
 int Light::getId(int index)
 {
     return identifier;

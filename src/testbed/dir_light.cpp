@@ -14,7 +14,6 @@ void DirLight::render()
     pCurShader->setVec3("DirLightColor[" + std::to_string(identifier) + "]", lightColor * strength);
 }
 
-
 void DirLight::initShadowMapTexture()
 {
     if (depthMapFBO == 0) {
@@ -36,6 +35,20 @@ void DirLight::initShadowMapTexture()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthMapFBO<<" map : "<<depthMap<<std::endl;
+}
+
+glm::mat4 DirLight::createLightSpaceMatrix(float nearPlane, float farPlane)
+{
+    glm::mat4 lightProjection, lightView;
+    lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
+    lightView = glm::lookAt(pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    lightSpaceMtrx = lightProjection * lightView;
+    return lightSpaceMtrx;
+}
+
+glm::mat4 DirLight::getLightSpaceMatrix()
+{
+    return lightSpaceMtrx;
 }
 
 unsigned int DirLight::getShadowMap()
