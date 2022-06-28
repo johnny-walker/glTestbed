@@ -11,7 +11,7 @@ uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 
-uniform vec3 ViewPos;
+uniform vec3 viewPos;
 
 // direction lights shadow mapping
 uniform sampler2D shadowMap0;
@@ -19,23 +19,23 @@ uniform sampler2D shadowMap1;
 uniform mat4 lightSpaceMatrix0;
 uniform mat4 lightSpaceMatrix1;
 
-uniform int  DirLightCount;
-uniform vec3 DirLightDir[2]; 
-uniform vec3 DirLightColor[2]; 
+uniform int  dirLightCount;
+uniform vec3 dirLightDir[2]; 
+uniform vec3 dirLightColor[2]; 
 
 // point lights shadow mapping
 uniform samplerCube cubeMap0;
 uniform samplerCube cubeMap1;
-uniform float FarPlane;
-uniform int  PointLightDrawId;
+uniform float farPlane;
+uniform int  ptLightDrawId;
 
-uniform int  PointLightCount;
-uniform vec3 PointLightPos[2]; 
-uniform vec3 PointLightColor[2]; 
+uniform int  ptLightCount;
+uniform vec3 ptLightPos[2]; 
+uniform vec3 ptLightColor[2]; 
 
 // render control flags
-uniform int RenderMode;     
-uniform int LightingModel;  
+uniform int renderMode;     
+uniform int lightingModel;  
 
 // constant
 float Weight_Ambient = 0.05f;
@@ -97,13 +97,13 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int i)
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
 
-    vec3 lightDir = normalize(PointLightPos[i] - fs_in.WorldPos); 
+    vec3 lightDir = normalize(ptLightPos[i] - fs_in.WorldPos); 
     float cosTheta = max(dot(norm, lightDir), 0.0);
     
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
 
-    float distance = length(PointLightPos[i] - fs_in.WorldPos);
+    float distance = length(ptLightPos[i] - fs_in.WorldPos);
     float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
     
     // weighted sum
@@ -111,7 +111,7 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int i)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
     
-    ptLight = (ambient + diffuse + specular)*PointLightColor[i];
+    ptLight = (ambient + diffuse + specular)*ptLightColor[i];
     return ptLight;
 }
 
@@ -127,7 +127,7 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int i)
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
   
-    vec3 lightDir = normalize(DirLightDir[i]);
+    vec3 lightDir = normalize(dirLightDir[i]);
     float cosTheta = max(dot(norm, lightDir), 0.0);
 
     vec3 halfwayDir = normalize(lightDir + viewDir);  
@@ -142,7 +142,7 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int i)
                           lightSpaceMatrix0 * vec4(fs_in.WorldPos, 1.0) : 
                           lightSpaceMatrix1 * vec4(fs_in.WorldPos, 1.0) ; 
     shadow = ShadowCalculation(wPosLightSpace, lightDir, i);
-    dirLight = (ambient + (1.f-shadow)*(diffuse + specular))*DirLightColor[i];
+    dirLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLightColor[i];
     return dirLight;
 }
 
@@ -150,10 +150,10 @@ vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir)
 {
     vec3 ptLight = vec3(0.f);
     vec3 dirLight = vec3(0.f);
-    for (int i=0; i<PointLightCount; i++) {
+    for (int i=0; i<ptLightCount; i++) {
         ptLight += PointLighting(norm, viewDir, i);
     }
-    for (int i=0; i<DirLightCount; i++) {
+    for (int i=0; i<dirLightCount; i++) {
         dirLight += DirectionLighting(norm, viewDir, i);
     }
     return ptLight + dirLight;
@@ -161,24 +161,24 @@ vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir)
 
 void main()
 {    
-    if (RenderMode == 1) {
+    if (renderMode == 1) {
         // draw point light sphere only
-        FragColor = vec4(PointLightColor[PointLightDrawId], 1.0);
+        FragColor = vec4(ptLightColor[ptLightDrawId], 1.0);
         return;
     }
 
     vec3 result = vec3(0.f);
     vec3 norm = normalize(fs_in.Normal);
-    vec3 viewDir = normalize(ViewPos - fs_in.WorldPos);
+    vec3 viewDir = normalize(viewPos - fs_in.WorldPos);
 
-    if (LightingModel == 0) {
+    if (lightingModel == 0) {
         result = BlinnPhong_Lighting(norm, viewDir);
-    } else if (LightingModel == 1) {
-        for (int i=0; i<PointLightCount; i++) {
+    } else if (lightingModel == 1) {
+        for (int i=0; i<ptLightCount; i++) {
             result += PointLighting(norm, viewDir, i);
         }
-    } else if (LightingModel == 2) {
-        for (int i=0; i<DirLightCount; i++) {
+    } else if (lightingModel == 2) {
+        for (int i=0; i<dirLightCount; i++) {
             result += DirectionLighting(norm, viewDir, i);
         }
     }

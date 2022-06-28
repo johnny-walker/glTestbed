@@ -10,12 +10,12 @@ void PointLight::render()
     Light::render();
 
     pCurShader->use();
-    pCurShader->setVec3("PointLightPos[" + std::to_string(identifier) + "]", pos);
-    pCurShader->setVec3("PointLightColor[" + std::to_string(identifier) + "]", lightColor*strength);
+    pCurShader->setVec3("ptLightPos[" + std::to_string(identifier) + "]", pos);
+    pCurShader->setVec3("ptLightColor[" + std::to_string(identifier) + "]", lightColor*strength);
 
     // draw light 
-    pCurShader->setInt("RenderMode", 1);
-    pCurShader->setInt("PointLightDrawId", identifier);
+    pCurShader->setInt("renderMode", 1);
+    pCurShader->setInt("ptLightDrawId", identifier);
     if (dirty) {
         initSphere();
         dirty = false;
@@ -25,7 +25,7 @@ void PointLight::render()
     glBindVertexArray(0);
 
     //restore to default
-    pCurShader->setInt("RenderMode", 0);
+    pCurShader->setInt("renderMode", 0);
 }
 
 void PointLight::initCubemapTexture()

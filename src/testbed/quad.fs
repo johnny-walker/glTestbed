@@ -4,14 +4,14 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D depthMap;
-uniform float NearPlane;
-uniform float FarPlane;
+uniform float nearPlane;
+uniform float farPlane;
 
 // required when using a perspective projection matrix
 float LinearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1.0; // Back to NDC 
-    return (2.0 * NearPlane * FarPlane) / (FarPlane + NearPlane - z * (FarPlane - NearPlane));	
+    return (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));	
 }
 
 void main()

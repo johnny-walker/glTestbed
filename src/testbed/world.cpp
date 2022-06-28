@@ -95,8 +95,8 @@ bool World::init()
 
     // init 2 point lights and 2 direction lights
     pShader->use();
-    pShader->setInt("PointLightCount", 2);
-    pShader->setInt("DirLightCount", 2);
+    pShader->setInt("ptLightCount", 2);
+    pShader->setInt("dirLightCount", 2);
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
@@ -143,9 +143,9 @@ void World::render()
         processInput(deltaTime);
         // update user inputs
         setShader(pShader);
-        pShader->setInt("RenderMode", 0);
-        pShader->setInt("LightingModel", lightModel);
-        pShader->setVec3("ViewPos", pCamera->Position);
+        pShader->setInt("renderMode", 0);
+        pShader->setInt("lightingModel", lightModel);
+        pShader->setVec3("viewPos", pCamera->Position);
 
         // render scene
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -196,8 +196,8 @@ void World::render()
         if (showDepthMap) {
             // 2.1, show direction light shadow map
             pShaderQuad->use();
-            pShaderQuad->setFloat("NearPlane", nearPlane);
-            pShaderQuad->setFloat("FarPlane", farPlane);
+            pShaderQuad->setFloat("nearPlane", nearPlane);
+            pShaderQuad->setFloat("farPlane", farPlane);
             for (int i = 0; i < dirLights.size(); i++) {
                 if (pCtrlLight == dirLights[i]) {
                     depthMap = dirLights[i]->getShadowMap();
@@ -220,7 +220,7 @@ void World::render()
                 glActiveTexture(GL_TEXTURE3 + i);
                 glBindTexture(GL_TEXTURE_2D, depthMap);
             }
-            pShader->setFloat("FarPlane", ptFarPlane);
+            pShader->setFloat("farPlane", ptFarPlane);
             for (int i = 0; i < ptLights.size(); i++) {
                 pShader->setInt("cubeMap" + std::to_string(i), 5 + i);
                 cubemap = ptLights[i]->getCubemap();

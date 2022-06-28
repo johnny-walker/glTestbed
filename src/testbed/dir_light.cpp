@@ -10,8 +10,8 @@ void DirLight::render()
 {
     Light::render();
     pCurShader->use();
-    pCurShader->setVec3("DirLightDir[" + std::to_string(identifier) + "]", pos);
-    pCurShader->setVec3("DirLightColor[" + std::to_string(identifier) + "]", lightColor * strength);
+    pCurShader->setVec3("dirLightDir[" + std::to_string(identifier) + "]", pos);
+    pCurShader->setVec3("dirLightColor[" + std::to_string(identifier) + "]", lightColor * strength);
 }
 
 void DirLight::initShadowMapTexture()
