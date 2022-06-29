@@ -177,7 +177,7 @@ void World::render()
         std::vector<glm::mat4> shadowMatrices;
 
         setShader(pShaderCubemap);
-        for (int i = 0; i < ptLights.size(); i++) {
+        for (int i = 2; i < ptLights.size(); i++) {
             shadowMatrices = ptLights[i]->createLightSpaceMatrix(ptNearPlane, ptFarPlane);
             pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowMatrices[i]);
             pShaderCubemap->setFloat("farPlane", ptFarPlane);

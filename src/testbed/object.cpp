@@ -17,9 +17,12 @@ void BaseObject::render()
 
     model = glm::scale(model, glm::vec3(scale));
     model = glm::translate(model, pos);
-    model = glm::rotate(model, angle.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, angle.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, angle.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    if (angle.x != 0.f)
+        model = glm::rotate(model, angle.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    if (angle.y != 0.f)
+        model = glm::rotate(model, angle.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    if (angle.z != 0.f)
+        model = glm::rotate(model, angle.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
