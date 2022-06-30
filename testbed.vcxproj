@@ -127,6 +127,7 @@
       </Message>
       <Command>copy .\src\testbed\*.fs .\x64\Debug
 copy .\src\testbed\*.vs .\x64\Debug
+copy .\src\testbed\*.gs .\x64\Debug
 copy .\dlls\*.dll .\x64\Debug
 </Command>
     </PreBuildEvent>
@@ -181,6 +182,7 @@ copy .\dlls\*.dll .\x64\Debug
       </Message>
       <Command>copy .\src\testbed\*.fs .\x64\Release
 copy .\src\testbed\*.vs .\x64\Release
+copy .\src\testbed\*.gs .\x64\Release
 copy .\dlls\*.dll .\x64\Release
 </Command>
     </PreBuildEvent>

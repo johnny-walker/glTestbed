@@ -26,10 +26,10 @@ public:
         const char* fShaderCode = nullptr;
         const char* gShaderCode = nullptr;
         
-        vShaderStr = readShaderCode(vertexPath);
-        fShaderStr = readShaderCode(fragmentPath);
+        vShaderStr = readShaderFile(vertexPath);
+        fShaderStr = readShaderFile(fragmentPath);
         if (geometryPath)
-            gShaderStr = readShaderCode(geometryPath);
+            gShaderStr = readShaderFile(geometryPath);
 
         vShaderCode = vShaderStr.c_str();
         fShaderCode = fShaderStr.c_str();
@@ -72,9 +72,8 @@ public:
         }
     }
 
-    std::string readShaderCode(const char* path)
+    std::string readShaderFile(const char* path)
     {
-        std::string shaderCode;
         std::ifstream shaderFile;
         std::stringstream shaderStream;
         // ensure ifstream objects can throw exceptions:
@@ -90,8 +89,7 @@ public:
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: " << e.what() << std::endl;
         }
-        std::string retCode = shaderStream.str();
-        return retCode;
+        return shaderStream.str();
     }
 
     // activate the shader
