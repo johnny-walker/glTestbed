@@ -19,8 +19,8 @@ public:
 	void render();
 
 	void initCubemapTexture();
-	std::vector<glm::mat4> createLightSpaceMatrix(float nearPlane, float farPlane);
-	std::vector<glm::mat4> getLightSpaceMatrix();
+	std::vector<glm::mat4> createMatrix(float nearPlane, float farPlane);
+	std::vector<glm::mat4> getMatrix();
 	unsigned int getCubemap();
 	unsigned int getCubemapFBO();
 

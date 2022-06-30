@@ -13,7 +13,7 @@ void PointLight::render()
     pCurShader->setVec3("ptLights.position[" + std::to_string(identifier) + "]", pos);
     pCurShader->setVec3("ptLights.color[" + std::to_string(identifier) + "]", lightColor*strength);
 
-    // draw light 
+    // draw light only when lightId >= 0
     pCurShader->setInt("lightId", identifier);
     if (dirty) {
         initSphere();
@@ -23,7 +23,7 @@ void PointLight::render()
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
-    //restore to default
+    //restore to default (-1)
     pCurShader->setInt("lightId", -1);
 }
 
@@ -53,7 +53,7 @@ void PointLight::initCubemapTexture()
     std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthCubemapFBO<<" map : "<<depthCubemap<<std::endl;
 }
 
-std::vector<glm::mat4> PointLight::createLightSpaceMatrix(float nearPlane, float farPlane)
+std::vector<glm::mat4> PointLight::createMatrix(float nearPlane, float farPlane)
 {
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)scrWidth/(float)scrWidth, nearPlane, farPlane);
 
@@ -67,7 +67,7 @@ std::vector<glm::mat4> PointLight::createLightSpaceMatrix(float nearPlane, float
     return shadowTransforms;
 }
 
-std::vector<glm::mat4> PointLight::getLightSpaceMatrix()
+std::vector<glm::mat4> PointLight::getMatrix()
 {
     return shadowTransforms;
 }

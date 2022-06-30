@@ -12,7 +12,6 @@ uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 
-// direction lights shadow mapping
 struct DirectLights {
     int  count;
     mat4 matrics[2];
@@ -23,7 +22,6 @@ struct DirectLights {
 };  
 uniform DirectLights dirLights;
 
-// point lights shadow mapping
 struct PointLights {
     int  count;
     vec3 position[2]; 

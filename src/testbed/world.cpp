@@ -179,7 +179,7 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
     unsigned int depthMapFBO = 0;
 
     for (int i = 0; i < dirLights.size(); i++) {
-        lightMtrx = dirLights[i]->createLightSpaceMatrix(nearPlane, farPlane);
+        lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane);
         pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
         depthMapFBO = dirLights[i]->getShadowMapFBO();
 
@@ -215,7 +215,7 @@ void World::generatePtShadowMap(float nearPlane, float farPlane)
     std::vector<glm::mat4> shadowMatrices;
 
     for (int i = 0; i < ptLights.size(); i++) {
-        shadowMatrices = ptLights[i]->createLightSpaceMatrix(nearPlane, farPlane);
+        shadowMatrices = ptLights[i]->createMatrix(nearPlane, farPlane);
         for (int face = 0; face < 6; face++) {
             pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(face) + "]", shadowMatrices[face]);
         }
@@ -235,7 +235,7 @@ void World::configDirLightShadowMap()
     unsigned int depthMap = 0;
     glm::mat4 lightMtrx = glm::mat4(0.f);
     for (int i = 0; i < dirLights.size(); i++) {
-        lightMtrx = dirLights[i]->getLightSpaceMatrix();
+        lightMtrx = dirLights[i]->getMatrix();
         pShader->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
         pShader->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
         depthMap = dirLights[i]->getShadowMap();

@@ -37,7 +37,7 @@ void DirLight::initShadowMapTexture()
     //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthMapFBO<<" map : "<<depthMap<<std::endl;
 }
 
-glm::mat4 DirLight::createLightSpaceMatrix(float nearPlane, float farPlane)
+glm::mat4 DirLight::createMatrix(float nearPlane, float farPlane)
 {
     glm::mat4 lightProjection, lightView;
     lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
@@ -46,7 +46,7 @@ glm::mat4 DirLight::createLightSpaceMatrix(float nearPlane, float farPlane)
     return lightSpaceMtrx;
 }
 
-glm::mat4 DirLight::getLightSpaceMatrix()
+glm::mat4 DirLight::getMatrix()
 {
     return lightSpaceMtrx;
 }
