@@ -10,8 +10,8 @@ void PointLight::render()
     Light::render();
 
     pCurShader->use();
-    pCurShader->setVec3("ptLights.lightPos[" + std::to_string(identifier) + "]", pos);
-    pCurShader->setVec3("ptLights.lightColor[" + std::to_string(identifier) + "]", lightColor*strength);
+    pCurShader->setVec3("ptLights.position[" + std::to_string(identifier) + "]", pos);
+    pCurShader->setVec3("ptLights.color[" + std::to_string(identifier) + "]", lightColor*strength);
 
     // draw light 
     pCurShader->setInt("lightId", identifier);

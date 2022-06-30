@@ -95,8 +95,8 @@ bool World::init()
 
     // init 2 point lights and 2 direction lights
     pShader->use();
-    pShader->setInt("ptLights.lightCount", 2);
-    pShader->setInt("dirLights.lightCount", 2);
+    pShader->setInt("ptLights.count", 2);
+    pShader->setInt("dirLights.count", 2);
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
@@ -236,7 +236,7 @@ void World::configDirLightShadowMap()
     glm::mat4 lightMtrx = glm::mat4(0.f);
     for (int i = 0; i < dirLights.size(); i++) {
         lightMtrx = dirLights[i]->getLightSpaceMatrix();
-        pShader->setMat4("dirLights.ligthMatrics[" + std::to_string(i) + "]", lightMtrx);
+        pShader->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
         pShader->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
         depthMap = dirLights[i]->getShadowMap();
 

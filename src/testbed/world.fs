@@ -14,25 +14,23 @@ uniform sampler2D texture_normal;
 
 // direction lights shadow mapping
 struct DirectLights {
+    int  count;
+    mat4 matrics[2];
+    vec3 direction[2]; 
+    vec3 color[2]; 
     sampler2D shadowMap0;
     sampler2D shadowMap1;
-
-    int  lightCount;
-    mat4 ligthMatrics[2];
-    vec3 lightDir[2]; 
-    vec3 lightColor[2]; 
 };  
 uniform DirectLights dirLights;
 
 // point lights shadow mapping
 struct PointLights {
+    int  count;
+    vec3 position[2]; 
+    vec3 color[2]; 
+    float farPlane;
     samplerCube cubeMap0;
     samplerCube cubeMap1;
-    float farPlane;
-
-    int  lightCount;
-    vec3 lightPos[2]; 
-    vec3 lightColor[2]; 
 };  
 uniform PointLights ptLights;
 
@@ -81,13 +79,13 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
 
-    vec3 lightDir = normalize(ptLights.lightPos[id] - fs_in.WorldPos); 
+    vec3 lightDir = normalize(ptLights.position[id] - fs_in.WorldPos); 
     float cosTheta = max(dot(norm, lightDir), 0.0);
     
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
 
-    float distance = length(ptLights.lightPos[id] - fs_in.WorldPos);
+    float distance = length(ptLights.position[id] - fs_in.WorldPos);
     float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
     
     // weighted sum
@@ -95,7 +93,7 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
     
-    sumLight = (ambient + diffuse + specular)*ptLights.lightColor[id];
+    sumLight = (ambient + diffuse + specular)*ptLights.color[id];
     return sumLight;
 }
 
@@ -131,7 +129,7 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
   
-    vec3 lightDir = normalize(dirLights.lightDir[id]);
+    vec3 lightDir = normalize(dirLights.direction[id]);
     float cosTheta = max(dot(norm, lightDir), 0.0);
 
     vec3 halfwayDir = normalize(lightDir + viewDir);  
@@ -142,9 +140,9 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex);
     specular = Weight_Specular * specReflect * vec3(spacularTex);
 
-    vec4 wPosLightSpace = dirLights.ligthMatrics[id] * vec4(fs_in.WorldPos, 1.0); 
+    vec4 wPosLightSpace = dirLights.matrics[id] * vec4(fs_in.WorldPos, 1.0); 
     shadow = DirShadowCalculation(wPosLightSpace, lightDir, id);
-    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLights.lightColor[id];
+    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLights.color[id];
     return sumLight;
 }
 
@@ -152,10 +150,10 @@ vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir)
 {
     vec3 ptSumLight = vec3(0.f);
     vec3 dirSumLight = vec3(0.f);
-    for (int i=0; i<ptLights.lightCount; i++) {
+    for (int i=0; i<ptLights.count; i++) {
         ptSumLight += PointLighting(norm, viewDir, i);
     }
-    for (int i=0; i<dirLights.lightCount; i++) {
+    for (int i=0; i<dirLights.count; i++) {
         dirSumLight += DirectionLighting(norm, viewDir, i);
     }
     return ptSumLight + dirSumLight;
@@ -165,7 +163,7 @@ void main()
 {    
     if (lightId >= 0) {
         // draw point light sphere only
-        FragColor = vec4(ptLights.lightColor[lightId], 1.0);
+        FragColor = vec4(ptLights.color[lightId], 1.0);
         return;
     }
 
@@ -176,11 +174,11 @@ void main()
     if (lightingModel == 0) {
         result = BlinnPhong_Lighting(norm, viewDir);
     } else if (lightingModel == 1) {
-        for (int i=0; i<ptLights.lightCount; i++) {
+        for (int i=0; i<ptLights.count; i++) {
             result += PointLighting(norm, viewDir, i);
         }
     } else if (lightingModel == 2) {
-        for (int i=0; i<dirLights.lightCount; i++) {
+        for (int i=0; i<dirLights.count; i++) {
             result += DirectionLighting(norm, viewDir, i);
         }
     }
