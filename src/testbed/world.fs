@@ -7,34 +7,37 @@ in VS_OUT {
     in vec2 TexCoords;
 } fs_in;
 
+uniform vec3 viewPos;
 uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 
-uniform vec3 viewPos;
-
 // direction lights shadow mapping
-uniform sampler2D shadowMap0;
-uniform sampler2D shadowMap1;
-uniform mat4 lightSpaceMatrix0;
-uniform mat4 lightSpaceMatrix1;
+struct DirectLights {
+    sampler2D shadowMap0;
+    sampler2D shadowMap1;
 
-uniform int  dirLightCount;
-uniform vec3 dirLightDir[2]; 
-uniform vec3 dirLightColor[2]; 
+    int  lightCount;
+    mat4 ligthMatrics[2];
+    vec3 lightDir[2]; 
+    vec3 lightColor[2]; 
+};  
+uniform DirectLights dirLights;
 
 // point lights shadow mapping
-uniform samplerCube cubeMap0;
-uniform samplerCube cubeMap1;
-uniform float farPlane;
+struct PointLights {
+    samplerCube cubeMap0;
+    samplerCube cubeMap1;
+    float farPlane;
 
-uniform int  ptLightCount;
-uniform vec3 ptLightPos[2]; 
-uniform vec3 ptLightColor[2]; 
+    int  lightCount;
+    vec3 lightPos[2]; 
+    vec3 lightColor[2]; 
+};  
+uniform PointLights ptLights;
 
 // render control flags
-uniform int lightId;        // draw point light color
-uniform int renderMode;     // draw point light if 1
+uniform int lightId;        // draw specified point light color
 uniform int lightingModel;  // light controls
 
 // constant
@@ -57,8 +60,8 @@ float refineShadow(float shadow, vec3 projCoords, float bias, int id)
     for (int i=0; i<4; i++){
         float denom = 500.f;
         float neighborDepth = (id == 0) ? 
-                   texture(shadowMap0, projCoords.xy + poissonDisk[i]/denom ).z :
-                   texture(shadowMap1, projCoords.xy + poissonDisk[i]/denom ).z ;
+                   texture(dirLights.shadowMap0, projCoords.xy + poissonDisk[i]/denom ).z :
+                   texture(dirLights.shadowMap1, projCoords.xy + poissonDisk[i]/denom ).z ;
 
         if ( neighborDepth < projCoords.z - bias ) {
             shadow -= 0.05f;
@@ -67,13 +70,42 @@ float refineShadow(float shadow, vec3 projCoords, float bias, int id)
     return max(min(shadow, 1.f), 0.f);
 }
 
-float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id) 
+
+vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
+{
+    vec3 sumLight = vec3(0.f);
+    vec3 ambient = vec3(0.f);
+    vec3 diffuse = vec3(0.f);
+    vec3 specular = vec3(0.f);
+
+    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
+    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
+
+    vec3 lightDir = normalize(ptLights.lightPos[id] - fs_in.WorldPos); 
+    float cosTheta = max(dot(norm, lightDir), 0.0);
+    
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
+
+    float distance = length(ptLights.lightPos[id] - fs_in.WorldPos);
+    float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
+    
+    // weighted sum
+    ambient = Weight_Ambient * vec3(diffuseTex) * attenuation;
+    diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
+    specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
+    
+    sumLight = (ambient + diffuse + specular)*ptLights.lightColor[id];
+    return sumLight;
+}
+
+float DirShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id) 
 {
     vec3 projCoords = worldPosLightSpace.xyz / worldPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
     float closestDepth = (id == 0) ?  
-                         texture(shadowMap0, projCoords.xy).r : 
-                         texture(shadowMap1, projCoords.xy).r ; 
+                         texture(dirLights.shadowMap0, projCoords.xy).r : 
+                         texture(dirLights.shadowMap1, projCoords.xy).r ; 
     float currentDepth = projCoords.z;
 
     if(projCoords.z > 1.0) {
@@ -87,37 +119,9 @@ float ShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id)
     return shadow;
 }
 
-vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
-{
-    vec3 ptLight = vec3(0.f);
-    vec3 ambient = vec3(0.f);
-    vec3 diffuse = vec3(0.f);
-    vec3 specular = vec3(0.f);
-
-    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
-    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
-
-    vec3 lightDir = normalize(ptLightPos[id] - fs_in.WorldPos); 
-    float cosTheta = max(dot(norm, lightDir), 0.0);
-    
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
-
-    float distance = length(ptLightPos[id] - fs_in.WorldPos);
-    float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
-    
-    // weighted sum
-    ambient = Weight_Ambient * vec3(diffuseTex) * attenuation;
-    diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
-    specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
-    
-    ptLight = (ambient + diffuse + specular)*ptLightColor[id];
-    return ptLight;
-}
-
 vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id) 
 {
-    vec3 dirLight = vec3(0.f);
+    vec3 sumLight = vec3(0.f);
     vec3 ambient = vec3(0.f);
     vec3 diffuse = vec3(0.f);
     vec3 specular = vec3(0.f);
@@ -127,7 +131,7 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
     vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
   
-    vec3 lightDir = normalize(dirLightDir[id]);
+    vec3 lightDir = normalize(dirLights.lightDir[id]);
     float cosTheta = max(dot(norm, lightDir), 0.0);
 
     vec3 halfwayDir = normalize(lightDir + viewDir);  
@@ -138,32 +142,30 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex);
     specular = Weight_Specular * specReflect * vec3(spacularTex);
 
-    vec4 wPosLightSpace = (id == 0) ?  
-                          lightSpaceMatrix0 * vec4(fs_in.WorldPos, 1.0) : 
-                          lightSpaceMatrix1 * vec4(fs_in.WorldPos, 1.0) ; 
-    shadow = ShadowCalculation(wPosLightSpace, lightDir, id);
-    dirLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLightColor[id];
-    return dirLight;
+    vec4 wPosLightSpace = dirLights.ligthMatrics[id] * vec4(fs_in.WorldPos, 1.0); 
+    shadow = DirShadowCalculation(wPosLightSpace, lightDir, id);
+    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLights.lightColor[id];
+    return sumLight;
 }
 
 vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir) 
 {
-    vec3 ptLight = vec3(0.f);
-    vec3 dirLight = vec3(0.f);
-    for (int i=0; i<ptLightCount; i++) {
-        ptLight += PointLighting(norm, viewDir, i);
+    vec3 ptSumLight = vec3(0.f);
+    vec3 dirSumLight = vec3(0.f);
+    for (int i=0; i<ptLights.lightCount; i++) {
+        ptSumLight += PointLighting(norm, viewDir, i);
     }
-    for (int i=0; i<dirLightCount; i++) {
-        dirLight += DirectionLighting(norm, viewDir, i);
+    for (int i=0; i<dirLights.lightCount; i++) {
+        dirSumLight += DirectionLighting(norm, viewDir, i);
     }
-    return ptLight + dirLight;
+    return ptSumLight + dirSumLight;
 }
 
 void main()
 {    
-    if (renderMode == 1) {
+    if (lightId >= 0) {
         // draw point light sphere only
-        FragColor = vec4(ptLightColor[lightId], 1.0);
+        FragColor = vec4(ptLights.lightColor[lightId], 1.0);
         return;
     }
 
@@ -174,11 +176,11 @@ void main()
     if (lightingModel == 0) {
         result = BlinnPhong_Lighting(norm, viewDir);
     } else if (lightingModel == 1) {
-        for (int i=0; i<ptLightCount; i++) {
+        for (int i=0; i<ptLights.lightCount; i++) {
             result += PointLighting(norm, viewDir, i);
         }
     } else if (lightingModel == 2) {
-        for (int i=0; i<dirLightCount; i++) {
+        for (int i=0; i<dirLights.lightCount; i++) {
             result += DirectionLighting(norm, viewDir, i);
         }
     }

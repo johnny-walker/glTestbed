@@ -95,8 +95,8 @@ bool World::init()
 
     // init 2 point lights and 2 direction lights
     pShader->use();
-    pShader->setInt("ptLightCount", 2);
-    pShader->setInt("dirLightCount", 2);
+    pShader->setInt("ptLights.lightCount", 2);
+    pShader->setInt("dirLights.lightCount", 2);
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShader, pCamera);
@@ -146,7 +146,6 @@ void World::render()
         processInput(deltaTime);
 
         setShader(pShader);
-        pShader->setInt("renderMode", 0);
         pShader->setInt("lightingModel", lightModel);
         pShader->setVec3("viewPos", pCamera->Position);
 
@@ -237,8 +236,8 @@ void World::configDirLightShadowMap()
     glm::mat4 lightMtrx = glm::mat4(0.f);
     for (int i = 0; i < dirLights.size(); i++) {
         lightMtrx = dirLights[i]->getLightSpaceMatrix();
-        pShader->setMat4("lightSpaceMatrix" + std::to_string(i), lightMtrx);
-        pShader->setInt("shadowMap" + std::to_string(i), 3 + i);
+        pShader->setMat4("dirLights.ligthMatrics[" + std::to_string(i) + "]", lightMtrx);
+        pShader->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
         depthMap = dirLights[i]->getShadowMap();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -250,9 +249,9 @@ void World::configDirLightShadowMap()
 void World::configPtLightShadowMap(float farPlane)
 {
     unsigned int cubemap = 0;
-    pShader->setFloat("farPlane", farPlane);
+    pShader->setFloat("ptLights.farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
-        pShader->setInt("cubeMap" + std::to_string(i), 5 + i);
+        pShader->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
         cubemap = ptLights[i]->getCubemap();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
