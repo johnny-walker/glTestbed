@@ -1,13 +1,28 @@
 #include "point_light.h"
 
+PointLight::PointLight(int id, int width, int height) :
+Light(id, width, height) 
+{
+}
+
+PointLight::~PointLight()
+{
+    shadowTransforms.clear();
+}
+
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
     Light::init(pShader, pCamera);
+    initCubemapTexture();
 }
 
 void PointLight::render()
 {
-    Light::render();
+    if (dirty) {
+        initSphere();
+    }
+
+    Light::render();    // dirty will be reset
 
     pCurShader->use();
     pCurShader->setVec3("ptLights.position[" + std::to_string(identifier) + "]", pos);
@@ -15,10 +30,7 @@ void PointLight::render()
 
     // draw light only when lightId >= 0
     pCurShader->setInt("lightId", identifier);
-    if (dirty) {
-        initSphere();
-        dirty = false;
-    }
+
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -50,13 +62,14 @@ void PointLight::initCubemapTexture()
         glReadBuffer(GL_NONE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthCubemapFBO<<" map : "<<depthCubemap<<std::endl;
+    //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthCubemapFBO<<" map : "<<depthCubemap<<std::endl;
 }
 
 std::vector<glm::mat4> PointLight::createMatrix(float nearPlane, float farPlane)
 {
-    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)scrWidth/(float)scrWidth, nearPlane, farPlane);
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)scrWidth/(float)scrHeight, nearPlane, farPlane);
 
+    shadowTransforms.clear();
     shadowTransforms.push_back(shadowProj * glm::lookAt(pos, pos + glm::vec3(1.0f, 0.0f, 0.0f),  glm::vec3(0.0f, -1.0f, 0.0f)));
     shadowTransforms.push_back(shadowProj * glm::lookAt(pos, pos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
     shadowTransforms.push_back(shadowProj * glm::lookAt(pos, pos + glm::vec3(0.0f, 1.0f, 0.0f),  glm::vec3(0.0f, 0.0f, 1.0f)));

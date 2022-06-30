@@ -5,16 +5,8 @@
 class BaseModel: public BaseObject
 {
 public: 
-	BaseModel(int width, int height, string const& path, bool gamma = false) :
-		BaseObject(width, height)
-	{
-		stbi_set_flip_vertically_on_load(false);
-		pModel = new Model(path, gamma);
-	}
-	~BaseModel()
-	{
-		delete pModel;
-	}
+	BaseModel(int width, int height, string const& path, bool gamma = false);
+	~BaseModel();
 
 public:
 	void init(Shader* pShader, Camera* pCamera);

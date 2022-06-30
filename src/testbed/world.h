@@ -63,9 +63,9 @@ private:
 
 	void generateDirShadowMap(float nearPlane, float farPlane);
 	void renderDirShadowMap(float nearPlane, float farPlane);
-	void generatePtShadowMap(float nearPlane, float farPlane);
+	void generatePtCubemap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
-	void configPtLightShadowMap(float farPlane);
+	void configPtLightCubemap(float farPlane);
 	void renderQuad();
 
 private:

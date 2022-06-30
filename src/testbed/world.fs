@@ -17,6 +17,7 @@ struct DirectLights {
     mat4 matrics[2];
     vec3 direction[2]; 
     vec3 color[2]; 
+
     sampler2D shadowMap0;
     sampler2D shadowMap1;
 };  
@@ -27,6 +28,7 @@ struct PointLights {
     vec3 position[2]; 
     vec3 color[2]; 
     float farPlane;
+
     samplerCube cubeMap0;
     samplerCube cubeMap1;
 };  
@@ -45,27 +47,23 @@ float Attenuate_Constant = 1.f;
 float Attenuate_Linear = 0.09f;
 float Attenuate_Quadratic = 0.032;
 
-//http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
-float refineShadow(float shadow, vec3 projCoords, float bias, int id) 
+float PtShadowCalculation(int id)
 {
-    vec2 poissonDisk[4] = vec2[](vec2( -0.94201624, -0.39906216 ),
-                                 vec2( 0.94558609, -0.76890725 ),
-                                 vec2( -0.094184101, -0.92938870 ),
-                                 vec2( 0.34495938, 0.29387760 ) );
+    // get vector between fragment position and light position
+    vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
+    float closestDepth = (id == 0) ?  
+                         texture(ptLights.cubeMap0, fragToLight).r : 
+                         texture(ptLights.cubeMap1, fragToLight).r ; 
 
-    for (int i=0; i<4; i++){
-        float denom = 500.f;
-        float neighborDepth = (id == 0) ? 
-                   texture(dirLights.shadowMap0, projCoords.xy + poissonDisk[i]/denom ).z :
-                   texture(dirLights.shadowMap1, projCoords.xy + poissonDisk[i]/denom ).z ;
-
-        if ( neighborDepth < projCoords.z - bias ) {
-            shadow -= 0.05f;
-        }
-    }
-    return max(min(shadow, 1.f), 0.f);
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= ptLights.farPlane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+  
+    float bias = 0.05f;
+    float shadow = (currentDepth-bias > closestDepth) ? 1.0 : 0.0 ;        
+    return shadow;
 }
-
 
 vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
 {
@@ -90,8 +88,13 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     ambient = Weight_Ambient * vec3(diffuseTex) * attenuation;
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
+
+    float shadow = 0;//PtShadowCalculation(id);
+    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     
-    sumLight = (ambient + diffuse + specular)*ptLights.color[id];
+    //debug code
+    //return shadow*ptLights.color[id];
+
     return sumLight;
 }
 
@@ -109,7 +112,7 @@ float DirShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id)
     }
    
     float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
-    float shadow = currentDepth - bias > closestDepth  ? 1.f : 0.0;
+    float shadow = (currentDepth-bias > closestDepth) ? 1.f : 0.0;
 
     //shadow = refineShadow(shadow, projCoords, bias, i);
     return shadow;

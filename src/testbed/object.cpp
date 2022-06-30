@@ -1,4 +1,10 @@
 #include "object.h"
+BaseObject::BaseObject(int width, int height)
+{
+    scrWidth = width;
+    scrHeight = height;
+}
+BaseObject::~BaseObject() {}
 
 void BaseObject::init(Shader* pShader, Camera* pCamera)
 {
@@ -27,6 +33,7 @@ void BaseObject::render()
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
     pCurShader->setMat4("model", model);
+    dirty = false;
 }
 
 void BaseObject::setShader(Shader* pShader)

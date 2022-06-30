@@ -21,12 +21,8 @@ protected:
 	bool dirty = true;	// flag if angle or pos changes
 
 public:
-	BaseObject(int width, int height) 
-	{
-		scrWidth  = width;
-		scrHeight = height;
-	}
-	~BaseObject() {}
+	BaseObject(int width, int height);
+	~BaseObject();
 
 public:
 	virtual void init(Shader* pShader, Camera* pCamera);
