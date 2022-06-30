@@ -15,7 +15,7 @@ void PointLight::render()
 
     // draw light 
     pCurShader->setInt("renderMode", 1);
-    pCurShader->setInt("ptLightDrawId", identifier);
+    pCurShader->setInt("lightId", identifier);
     if (dirty) {
         initSphere();
         dirty = false;

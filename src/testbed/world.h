@@ -61,6 +61,11 @@ private:
 	Shader* pShaderQuad = nullptr;
 	bool showDepthMap = false;
 
+	void generateDirShadowMap(float nearPlane, float farPlane);
+	void renderDirShadowMap(float nearPlane, float farPlane);
+	void generatePtShadowMap(float nearPlane, float farPlane);
+	void configDirLightShadowMap();
+	void configPtLightShadowMap(float farPlane);
 	void renderQuad();
 
 private:
