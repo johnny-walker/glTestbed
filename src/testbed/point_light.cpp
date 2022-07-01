@@ -46,9 +46,11 @@ void PointLight::initCubemapTexture()
         // create depth cubemap texture
         glGenTextures(1, &depthCubemap);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemapFBO);
-        for (unsigned int i = 0; i < 6; ++i)
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
+        for (unsigned int i = 0; i < 6; ++i) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
+                GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
+                GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        }
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -67,7 +69,8 @@ void PointLight::initCubemapTexture()
 
 std::vector<glm::mat4> PointLight::createMatrix(float nearPlane, float farPlane)
 {
-    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)scrWidth/(float)scrHeight, nearPlane, farPlane);
+    float aspect = (float)scrWidth / (float)scrHeight;
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane);
 
     shadowTransforms.clear();
     shadowTransforms.push_back(shadowProj * glm::lookAt(pos, pos + glm::vec3(1.0f, 0.0f, 0.0f),  glm::vec3(0.0f, -1.0f, 0.0f)));

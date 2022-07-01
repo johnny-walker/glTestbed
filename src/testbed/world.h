@@ -16,7 +16,7 @@ class World
 	float lastFrame = 0.0f;
 
 	GLFWwindow* glWindow = nullptr;
-	Shader* pShader = nullptr;
+	Shader* pShaderWorld = nullptr;
 	Camera* pCamera = nullptr;
 
 	//lights
@@ -48,7 +48,7 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
-	void setShader(Shader* pShader);
+	void setShader(Shader* pShaderObj);
 	void renderScene();
 	void processInput(float deltaTime = 0.f);
 
@@ -62,8 +62,8 @@ private:
 	bool showDepthMap = false;
 
 	void generateDirShadowMap(float nearPlane, float farPlane);
-	void renderDirShadowMap(float nearPlane, float farPlane);
 	void generatePtCubemap(float nearPlane, float farPlane);
+	void renderDirShadowMap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
 	void configPtLightCubemap(float farPlane);
 	void renderQuad();

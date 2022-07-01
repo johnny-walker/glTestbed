@@ -28,6 +28,7 @@ struct PointLights {
     vec3 position[2]; 
     vec3 color[2]; 
     float farPlane;
+    bool debug;
 
     samplerCube cubeMap0;
     samplerCube cubeMap1;
@@ -65,8 +66,23 @@ float PtShadowCalculation(int id)
     return shadow;
 }
 
+vec3 PtShadowDebug(int id)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
+    float closestDepth = (id == 0) ?  
+                         texture(ptLights.cubeMap0, fragToLight).r : 
+                         texture(ptLights.cubeMap1, fragToLight).r ; 
+    return vec3(closestDepth);
+}
+
 vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
 {
+    //debug code
+    if (ptLights.debug) {
+        return PtShadowDebug(id);
+    }
+
     vec3 sumLight = vec3(0.f);
     vec3 ambient = vec3(0.f);
     vec3 diffuse = vec3(0.f);
@@ -89,12 +105,10 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
 
-    float shadow = 0;//PtShadowCalculation(id);
-    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
-    
-    //debug code
-    //return shadow*ptLights.color[id];
+    // check shadow
+    float shadow = PtShadowCalculation(id);
 
+    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     return sumLight;
 }
 
@@ -141,8 +155,10 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex);
     specular = Weight_Specular * specReflect * vec3(spacularTex);
 
+    // check shadow
     vec4 wPosLightSpace = dirLights.matrics[id] * vec4(fs_in.WorldPos, 1.0); 
     shadow = DirShadowCalculation(wPosLightSpace, lightDir, id);
+
     sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*dirLights.color[id];
     return sumLight;
 }
