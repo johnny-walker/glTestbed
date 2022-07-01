@@ -37,6 +37,11 @@ int Light::getId(int index)
     return identifier;
 }
 
+glm::vec3 Light::getColor() 
+{
+    return lightColor;
+}
+
 void Light::setPrimaryColor(int index)
 {
     if (index >= 0 && index <= 8) {

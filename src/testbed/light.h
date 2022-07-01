@@ -20,10 +20,14 @@ public:
 	virtual void render();
 
 	int getId(int index);
+	glm::vec3 getColor();
+	float getStrength();
+
 	void setColor(glm::vec3 color);
-	void setStrength(float value = 1.f);
 	void setPrimaryColor(int index);
+	void setStrength(float value = 1.f);
 	void adjustStrength(float delta = 1.f);
+
 	void processLight(GLFWwindow* glWindow);
 
 private:

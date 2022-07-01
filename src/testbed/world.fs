@@ -24,11 +24,11 @@ struct DirectLights {
 uniform DirectLights dirLights;
 
 struct PointLights {
+    bool debug;
     int  count;
+    float farPlane;
     vec3 position[2]; 
     vec3 color[2]; 
-    float farPlane;
-    bool debug;
 
     samplerCube cubeMap0;
     samplerCube cubeMap1;

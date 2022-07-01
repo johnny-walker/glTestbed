@@ -249,10 +249,11 @@ void World::configDirLightShadowMap()
     for (int i = 0; i < dirLights.size(); i++) {
         lightMtrx = dirLights[i]->getMatrix();
         pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
+        pShaderWorld->setVec3("dirLights.direction[" + std::to_string(i) + "]", dirLights[i]->getPos());
+        pShaderWorld->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor());
 
         depthMap = dirLights[i]->getShadowMap();
         pShaderWorld->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
-
         glActiveTexture(GL_TEXTURE3 + i);
         glBindTexture(GL_TEXTURE_2D, depthMap);
     }
@@ -261,12 +262,15 @@ void World::configDirLightShadowMap()
 void World::configPtLightCubemap(float farPlane)
 {
     unsigned int cubemap = 0;
+    pShaderWorld->use();
     pShaderWorld->setFloat("ptLights.farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
-        cubemap = ptLights[i]->getCubemap();
-        pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
+        pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
+        pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor());
 
-        glActiveTexture(GL_TEXTURE5 + i);
+        cubemap = ptLights[i]->getCubemap();
+        pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 3 + i);
+        glActiveTexture(GL_TEXTURE3 + i);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
     }
 }
