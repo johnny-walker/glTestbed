@@ -13,7 +13,8 @@ PointLight::~PointLight()
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
     Light::init(pShader, pCamera);
-    initCubemapTexture();
+    initShadowMapTexture();
+    //initCubemapTexture();
 }
 
 void PointLight::drawPointSphere(bool flag) {
@@ -69,7 +70,7 @@ void PointLight::initCubemapTexture()
     //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthCubemapFBO<<" map : "<<depthCubemap<<std::endl;
 }
 
-std::vector<glm::mat4> PointLight::createMatrix(float nearPlane, float farPlane)
+std::vector<glm::mat4> PointLight::createCubemapMatrix(float nearPlane, float farPlane)
 {
     float aspect = (float)scrWidth / (float)scrHeight;
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane);
@@ -85,7 +86,7 @@ std::vector<glm::mat4> PointLight::createMatrix(float nearPlane, float farPlane)
     return shadowTransforms;
 }
 
-std::vector<glm::mat4> PointLight::getMatrix()
+std::vector<glm::mat4> PointLight::getCubemapMatrix()
 {
     return shadowTransforms;
 }

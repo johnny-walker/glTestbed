@@ -4,8 +4,16 @@
 
 class Light : public BaseObject
 {
+
 protected:
 	int identifier = 0;
+
+	// shadow map
+	unsigned int depthMapFBO = 0;
+	unsigned int depthMap = 0;
+	float projNearPlane = 0.1f;
+	float projFarPlane = 10.f;
+	glm::mat4 lightSpaceMtrx = glm::mat4(1.f);
 
 	// color
 	std::vector<glm::vec3> colors;
@@ -18,6 +26,15 @@ public:
 
 	virtual void init(Shader* pShader, Camera* pCamera);
 	virtual void render();
+
+	//shadow map
+	void initShadowMapTexture();
+	glm::mat4 createMatrix(float nearPlane, float farPlane, bool orthographic);
+	glm::mat4 getMatrix();
+	float getProjNearPlane();
+	float getProjFarPlane();
+	unsigned int getShadowMap();
+	unsigned int getShadowMapFBO();
 
 	int getId(int index);
 	glm::vec3 getColor();

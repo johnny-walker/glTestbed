@@ -19,8 +19,8 @@ public:
 	void initCubemapTexture();
 
 	void drawPointSphere(bool flag);
-	std::vector<glm::mat4> createMatrix(float nearPlane, float farPlane);
-	std::vector<glm::mat4> getMatrix();
+	std::vector<glm::mat4> createCubemapMatrix(float nearPlane, float farPlane);
+	std::vector<glm::mat4> getCubemapMatrix();
 	unsigned int getCubemap();
 	unsigned int getCubemapFBO();
 

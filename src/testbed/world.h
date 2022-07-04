@@ -49,7 +49,7 @@ public:
 
 private:
 	void setShader(Shader* pShaderObj);
-	void renderScene();
+	void renderScene(bool drawSphere = true);
 	void processInput(float deltaTime = 0.f);
 
 private:
@@ -62,10 +62,12 @@ private:
 	bool showDepthMap = false;
 
 	void generateDirShadowMap(float nearPlane, float farPlane);
+	void generatePtShadowMap(float nearPlane, float farPlane);
 	void generatePtCubemap(float nearPlane, float farPlane);
-	void renderDirShadowMap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
+	void configPtLightShadowMap();
 	void configPtLightCubemap(float farPlane);
+	void renderShadowMap();
 	void renderQuad();
 
 private:

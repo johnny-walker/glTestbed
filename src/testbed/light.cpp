@@ -32,6 +32,71 @@ void Light::render()
     BaseObject::render();
 }
 
+void Light::initShadowMapTexture()
+{
+    if (depthMapFBO == 0) {
+        glGenFramebuffers(1, &depthMapFBO);
+        glGenTextures(1, &depthMap);
+
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
+            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthMapFBO<<" map : "<<depthMap<<std::endl;
+}
+
+glm::mat4 Light::createMatrix(float nearPlane, float farPlane, bool orthographic)
+{
+    projNearPlane = nearPlane;
+    projFarPlane = farPlane;
+
+    glm::mat4 lightProjection, lightView;
+    if (orthographic) {
+        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
+    } else {
+        float aspect = (float)scrWidth / (float)scrHeight;
+        lightProjection = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane);
+    }
+    lightView = glm::lookAt(pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    lightSpaceMtrx = lightProjection * lightView;
+    return lightSpaceMtrx;
+}
+
+glm::mat4 Light::getMatrix()
+{
+    return lightSpaceMtrx;
+}
+
+float Light::getProjNearPlane()
+{
+    return projNearPlane;
+}
+
+float Light::getProjFarPlane()
+{
+    return projFarPlane;
+}
+
+unsigned int Light::getShadowMap()
+{
+    return depthMap;
+}
+unsigned int Light::getShadowMapFBO()
+{
+    return depthMapFBO;
+}
+
+
 int Light::getId(int index)
 {
     return identifier;

@@ -54,10 +54,12 @@ bool World::init()
     pShaderWorld->setInt("texture_diffuse", 0);
     pShaderWorld->setInt("texture_specular", 1);
     pShaderWorld->setInt("texture_normal", 2);
+    pShaderWorld->setInt("lightId", (int)-1);
 
     pShaderShadow->use();
     pShaderShadow->setInt("texture_diffuse", 0);
     pShaderShadow->setInt("shadowMap", 1);
+
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
@@ -80,7 +82,7 @@ bool World::init()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-3.5f, 0.f, -3.5f);
+    pCube->setPos(-6.5f, 0.f, -12.5f);
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
@@ -127,7 +129,7 @@ bool World::init()
     dirLights.push_back(pDirLight);
 
     pShaderWorld->setInt("dirLights.count", (int) dirLights.size());
-    
+
     //lightModel = 1;
 
     return true;
@@ -157,19 +159,20 @@ void World::render()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
         generateDirShadowMap(dirNearPlane, dirFarPlane);
-        generatePtCubemap(ptNearPlane, ptFarPlane);
+        generatePtShadowMap(ptNearPlane, ptFarPlane);
+        //generatePtCubemap(ptNearPlane, ptFarPlane);
 
         if (showDepthMap) {
-            renderDirShadowMap(dirNearPlane, dirFarPlane);
-        } else 
-        { // render scene
+            renderShadowMap();
+        } else { 
+            // render scene
             setShader(pShaderWorld);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             configDirLightShadowMap();
-            configPtLightCubemap(ptFarPlane);
+            configPtLightShadowMap();
+            //configPtLightCubemap(ptFarPlane);
 
-            //pShaderWorld->setBool("ptLights.debug", showDepthMap);
             renderScene();
         }
 
@@ -185,13 +188,30 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
     unsigned int depthMapFBO = 0;
     setShader(pShaderShadow);
     for (int i = 0; i < dirLights.size(); i++) {
-        lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane);
+        lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane, true);
         pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
 
         depthMapFBO = dirLights[i]->getShadowMapFBO();
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        renderScene();
+        renderScene(false);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+}
+
+void World::generatePtShadowMap(float nearPlane, float farPlane)
+{
+    glm::mat4 lightMtrx = glm::mat4(0.f);
+    unsigned int depthMapFBO = 0;
+    setShader(pShaderShadow);
+    for (int i = 0; i < ptLights.size(); i++) {
+        lightMtrx = ptLights[i]->createMatrix(nearPlane, farPlane, false);
+        pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
+
+        depthMapFBO = ptLights[i]->getShadowMapFBO();
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        renderScene(false);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
@@ -202,44 +222,21 @@ void World::generatePtCubemap(float nearPlane, float farPlane)
     unsigned int cubemap = 0;
     std::vector<glm::mat4> shadowMatrices;
     setShader(pShaderCubemap);
+    pShaderCubemap->setFloat("farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
-        shadowMatrices = ptLights[i]->createMatrix(nearPlane, farPlane);
+        shadowMatrices = ptLights[i]->createCubemapMatrix(nearPlane, farPlane);
         for (int face = 0; face < 6; face++) {
             pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(face) + "]", shadowMatrices[face]);
         }
-        pShaderCubemap->setFloat("farPlane", farPlane);
         pShaderCubemap->setVec3("lightPos", ptLights[i]->getPos());
 
-        ptLights[i]->drawPointSphere(false);
         cubemapFBO = ptLights[i]->getCubemapFBO();
         glBindFramebuffer(GL_FRAMEBUFFER, cubemapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         renderScene();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        ptLights[i]->drawPointSphere(true);
     }
 }
-
-void World::renderDirShadowMap(float nearPlane, float farPlane)
-{
-    //direction light shadow map
-    unsigned int depthMap = 0;
-    pShaderQuad->use();
-    pShaderQuad->setBool("linearDepth", false);
-    pShaderQuad->setFloat("nearPlane", nearPlane);
-    pShaderQuad->setFloat("farPlane", farPlane);
-    // find the target light
-    for (int i = 0; i < dirLights.size(); i++) {
-        if (pCtrlLight == dirLights[i]) {
-            depthMap = dirLights[i]->getShadowMap();
-            break;
-        }
-    }
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    renderQuad();
-}
-
 void World::configDirLightShadowMap()
 {
     unsigned int depthMap = 0;
@@ -249,11 +246,29 @@ void World::configDirLightShadowMap()
         lightMtrx = dirLights[i]->getMatrix();
         pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
         pShaderWorld->setVec3("dirLights.direction[" + std::to_string(i) + "]", dirLights[i]->getPos());
-        pShaderWorld->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor());
+        pShaderWorld->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor()*dirLights[i]->getStrength());
 
         depthMap = dirLights[i]->getShadowMap();
         pShaderWorld->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
         glActiveTexture(GL_TEXTURE3 + i);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+    }
+}
+
+void World::configPtLightShadowMap()
+{
+    unsigned int depthMap = 0;
+    glm::mat4 lightMtrx = glm::mat4(0.f);
+    pShaderWorld->use();
+    for (int i = 0; i < ptLights.size(); i++) {
+        lightMtrx = ptLights[i]->getMatrix();
+        pShaderWorld->setMat4("ptLights.matrics[" + std::to_string(i) + "]", lightMtrx);
+        pShaderWorld->setVec3("ptLights.direction[" + std::to_string(i) + "]", ptLights[i]->getPos());
+        pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
+
+        depthMap = ptLights[i]->getShadowMap();
+        pShaderWorld->setInt("ptLights.shadowMap" + std::to_string(i), 3 + i);
+        glActiveTexture(GL_TEXTURE5 + i);
         glBindTexture(GL_TEXTURE_2D, depthMap);
     }
 }
@@ -265,12 +280,32 @@ void World::configPtLightCubemap(float farPlane)
     pShaderWorld->setFloat("ptLights.farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
         pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
-        pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor());
+        pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor()*ptLights[i]->getStrength());
 
         cubemap = ptLights[i]->getCubemap();
         pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
         glActiveTexture(GL_TEXTURE5 + i);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+    }
+}
+
+void World::renderShadowMap()
+{
+    unsigned int depthMap = 0;
+    float nearPlane = 1.f, farPlane = 10.f;
+    if (pCtrlLight) {
+        depthMap = pCtrlLight->getShadowMap();
+        nearPlane = pCtrlLight->getProjNearPlane();
+        farPlane = pCtrlLight->getProjFarPlane();
+
+        pShaderQuad->use();
+        pShaderQuad->setBool("linearDepth", false);
+        pShaderQuad->setFloat("nearPlane", nearPlane);
+        pShaderQuad->setFloat("farPlane", farPlane);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        renderQuad();
     }
 }
 
@@ -290,18 +325,16 @@ void World::setShader(Shader* pShaderObj)
         pBird->setShader(pShaderObj);
 }
 
-void World::renderScene()
+void World::renderScene(bool drawSphere)
 {
-    // render point lights
-    if (lightModel == 0 || lightModel == 1) {
-        for (int i = 0; i < ptLights.size(); i++)
-            ptLights[i]->render();
+    // render point lights sphere 
+    if (drawSphere) {
+        if (lightModel == 0 || lightModel == 1) {
+            for (int i = 0; i < ptLights.size(); i++)
+                ptLights[i]->render();
+        }
     }
-    // render direction lights
-    if (lightModel == 0 || lightModel == 2) {
-        for (int i = 0; i < dirLights.size(); i++)
-            dirLights[i]->render();
-    }
+    
     pFloor->render();
     pCube->render();
     pCow->render();

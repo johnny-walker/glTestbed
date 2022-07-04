@@ -24,12 +24,17 @@ struct DirectLights {
 uniform DirectLights dirLights;
 
 struct PointLights {
-    bool debug;
     int  count;
-    float farPlane;
+    mat4 matrics[2];
     vec3 position[2]; 
     vec3 color[2]; 
 
+    sampler2D shadowMap0;
+    sampler2D shadowMap1;
+    
+    // cubemap
+    bool debug;
+    float farPlane;
     samplerCube cubeMap0;
     samplerCube cubeMap1;
 };  
@@ -48,7 +53,26 @@ float Attenuate_Constant = 1.f;
 float Attenuate_Linear = 0.09f;
 float Attenuate_Quadratic = 0.032;
 
-float PtShadowCalculation(int id)
+float PtShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id) 
+{
+    vec3 projCoords = worldPosLightSpace.xyz / worldPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
+    float closestDepth = (id == 0) ?  
+                         texture(ptLights.shadowMap0, projCoords.xy).r : 
+                         texture(ptLights.shadowMap1, projCoords.xy).r ; 
+    float currentDepth = projCoords.z;
+
+    if(projCoords.z > 1.0) {
+        return 0.f;
+    }
+   
+    float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
+    float shadow = (currentDepth-bias > closestDepth) ? 1.f : 0.0;
+
+    return shadow;
+}
+
+float PtCubemapShadowCalculation(int id)
 {
     // get vector between fragment position and light position
     vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
@@ -78,7 +102,7 @@ vec3 PtShadowDebug(int id)
 
 vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
 {
-    //debug code
+    //debug code for cubemap
     if (ptLights.debug) {
         return PtShadowDebug(id);
     }
@@ -106,8 +130,10 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
 
     // check shadow
-    float shadow = 0;//PtShadowCalculation(id);
-
+    vec4 wPosLightSpace = ptLights.matrics[id] * vec4(fs_in.WorldPos, 1.0); 
+    float shadow = PtShadowCalculation(wPosLightSpace, lightDir, id);
+    //float shadow = PtCubemapShadowCalculation(id);
+ 
     sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     return sumLight;
 }
@@ -128,7 +154,6 @@ float DirShadowCalculation(vec4 worldPosLightSpace, vec3 lightDir, int id)
     float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
     float shadow = (currentDepth-bias > closestDepth) ? 1.f : 0.0;
 
-    //shadow = refineShadow(shadow, projCoords, bias, i);
     return shadow;
 }
 
