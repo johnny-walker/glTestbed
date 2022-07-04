@@ -16,8 +16,9 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-
 	void initCubemapTexture();
+
+	void drawPointSphere(bool flag);
 	std::vector<glm::mat4> createMatrix(float nearPlane, float farPlane);
 	std::vector<glm::mat4> getMatrix();
 	unsigned int getCubemap();
@@ -29,6 +30,7 @@ private:
 	std::vector<glm::mat4> shadowTransforms;
 
 private:
+	bool drawSphere = true;
 	void initSphere();
 };
 #endif //POINT_LIGHT_H

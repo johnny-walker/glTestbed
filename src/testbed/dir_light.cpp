@@ -16,9 +16,6 @@ void DirLight::init(Shader* pShader, Camera* pCamera)
 void DirLight::render()
 {
     Light::render();
-    pCurShader->use();
-    pCurShader->setVec3("dirLights.direction[" + std::to_string(identifier) + "]", pos);
-    pCurShader->setVec3("dirLights.color[" + std::to_string(identifier) + "]", lightColor * strength);
 }
 
 void DirLight::initShadowMapTexture()

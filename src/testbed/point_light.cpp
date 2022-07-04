@@ -16,27 +16,29 @@ void PointLight::init(Shader* pShader, Camera* pCamera)
     initCubemapTexture();
 }
 
+void PointLight::drawPointSphere(bool flag) {
+    drawSphere = flag;
+}
+
 void PointLight::render()
 {
-    if (dirty) {
+    if (dirty && drawSphere) {
         initSphere();
     }
 
     Light::render();    // dirty will be reset
 
-    pCurShader->use();
-    pCurShader->setVec3("ptLights.position[" + std::to_string(identifier) + "]", pos);
-    pCurShader->setVec3("ptLights.color[" + std::to_string(identifier) + "]", lightColor*strength);
-
     // draw light only when lightId >= 0
-    pCurShader->setInt("lightId", identifier);
+    if (drawSphere) {
+        pCurShader->setInt("lightId", identifier);
 
-    glBindVertexArray(sphereVAO);
-    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
+        glBindVertexArray(sphereVAO);
+        glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
-    //restore to default (-1)
-    pCurShader->setInt("lightId", -1);
+        //restore to default (-1)
+        pCurShader->setInt("lightId", -1);
+    }
 }
 
 void PointLight::initCubemapTexture()

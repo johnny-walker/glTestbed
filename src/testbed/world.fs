@@ -106,7 +106,7 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
 
     // check shadow
-    float shadow = PtShadowCalculation(id);
+    float shadow = 0;//PtShadowCalculation(id);
 
     sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     return sumLight;

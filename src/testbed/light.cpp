@@ -42,19 +42,25 @@ glm::vec3 Light::getColor()
     return lightColor;
 }
 
-void Light::setPrimaryColor(int index)
+float Light::getStrength()
 {
-    if (index >= 0 && index <= 8) {
-        lightColor = colors[index];
-    } else if (index == 9) {
-        //random color
-        lightColor = glm::vec3((rand() % 256) / 255.f, (rand() % 256) / 255.f, (rand() % 256) / 255.f);
-    }
+    return strength;
 }
 
 void Light::setColor(glm::vec3 color)
 {
     lightColor = color;
+}
+
+void Light::setPrimaryColor(int index)
+{
+    if (index >= 0 && index <= 8) {
+        lightColor = colors[index];
+    }
+    else if (index == 9) {
+        //random color
+        lightColor = glm::vec3((rand() % 256) / 255.f, (rand() % 256) / 255.f, (rand() % 256) / 255.f);
+    }
 }
 
 void Light::setStrength(float value) 
