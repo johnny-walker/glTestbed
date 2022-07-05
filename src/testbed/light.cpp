@@ -55,15 +55,17 @@ void Light::initShadowMapTexture()
     //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthMapFBO<<" map : "<<depthMap<<std::endl;
 }
 
-glm::mat4 Light::createMatrix(float nearPlane, float farPlane, bool orthographic)
+glm::mat4 Light::createMatrix(float nearPlane, float farPlane, bool ortho)
 {
     projNearPlane = nearPlane;
     projFarPlane = farPlane;
 
     glm::mat4 lightProjection, lightView;
-    if (orthographic) {
+    if (ortho) {
+        orthographic = true;
         lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
     } else {
+        orthographic = false;
         float aspect = (float)scrWidth / (float)scrHeight;
         lightProjection = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane);
     }
@@ -85,6 +87,10 @@ float Light::getProjNearPlane()
 float Light::getProjFarPlane()
 {
     return projFarPlane;
+}
+
+bool Light::isProjectionOrthographic(){
+    return orthographic;
 }
 
 unsigned int Light::getShadowMap()

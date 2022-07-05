@@ -82,7 +82,8 @@ bool World::init()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-6.5f, 0.f, -12.5f);
+    //pCube->setPos(-6.5f, 0.f, -12.5f);
+    pCube->setPos(0.f, 0.f, 0.f);
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
@@ -140,9 +141,6 @@ void World::render()
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    float dirNearPlane = 0.1f, dirFarPlane = 10.5f;
-    float ptNearPlane = 1.f, ptFarPlane = 25.f;
-
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -158,6 +156,8 @@ void World::render()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
+        float dirNearPlane = 0.1f, dirFarPlane = 10.f;
+        float ptNearPlane = 1.f, ptFarPlane = 10.f;
         generateDirShadowMap(dirNearPlane, dirFarPlane);
         generatePtShadowMap(ptNearPlane, ptFarPlane);
         //generatePtCubemap(ptNearPlane, ptFarPlane);
@@ -170,7 +170,7 @@ void World::render()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             configDirLightShadowMap();
-            configPtLightShadowMap();
+            configPtLightShadowMap(ptNearPlane, ptFarPlane);
             //configPtLightCubemap(ptFarPlane);
 
             renderScene();
@@ -188,6 +188,7 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
     unsigned int depthMapFBO = 0;
     setShader(pShaderShadow);
     for (int i = 0; i < dirLights.size(); i++) {
+        //orthographic projection
         lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane, true);
         pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
 
@@ -205,6 +206,7 @@ void World::generatePtShadowMap(float nearPlane, float farPlane)
     unsigned int depthMapFBO = 0;
     setShader(pShaderShadow);
     for (int i = 0; i < ptLights.size(); i++) {
+        //perspective projection
         lightMtrx = ptLights[i]->createMatrix(nearPlane, farPlane, false);
         pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
 
@@ -242,6 +244,7 @@ void World::configDirLightShadowMap()
     unsigned int depthMap = 0;
     glm::mat4 lightMtrx = glm::mat4(0.f);
     pShaderWorld->use();
+    pShaderWorld->setBool("dirLights.debug", debugDepthMap);
     for (int i = 0; i < dirLights.size(); i++) {
         lightMtrx = dirLights[i]->getMatrix();
         pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
@@ -255,11 +258,14 @@ void World::configDirLightShadowMap()
     }
 }
 
-void World::configPtLightShadowMap()
+void World::configPtLightShadowMap(float nearPlane, float farPlane)
 {
     unsigned int depthMap = 0;
     glm::mat4 lightMtrx = glm::mat4(0.f);
     pShaderWorld->use();
+    pShaderWorld->setFloat("ptLights.nearPlane", nearPlane);
+    pShaderWorld->setFloat("ptLights.farPlane", farPlane);
+    pShaderWorld->setBool("ptLights.debug", debugDepthMap);
     for (int i = 0; i < ptLights.size(); i++) {
         lightMtrx = ptLights[i]->getMatrix();
         pShaderWorld->setMat4("ptLights.matrics[" + std::to_string(i) + "]", lightMtrx);
@@ -278,6 +284,7 @@ void World::configPtLightCubemap(float farPlane)
     unsigned int cubemap = 0;
     pShaderWorld->use();
     pShaderWorld->setFloat("ptLights.farPlane", farPlane);
+    pShaderWorld->setBool("ptLights.debug", debugDepthMap);
     for (int i = 0; i < ptLights.size(); i++) {
         pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
         pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor()*ptLights[i]->getStrength());
@@ -291,15 +298,14 @@ void World::configPtLightCubemap(float farPlane)
 
 void World::renderShadowMap()
 {
-    unsigned int depthMap = 0;
-    float nearPlane = 1.f, farPlane = 10.f;
     if (pCtrlLight) {
-        depthMap = pCtrlLight->getShadowMap();
-        nearPlane = pCtrlLight->getProjNearPlane();
-        farPlane = pCtrlLight->getProjFarPlane();
+        bool ortho = pCtrlLight->isProjectionOrthographic();
+        unsigned int depthMap = pCtrlLight->getShadowMap();
+        float nearPlane = pCtrlLight->getProjNearPlane();
+        float farPlane = pCtrlLight->getProjFarPlane();
 
         pShaderQuad->use();
-        pShaderQuad->setBool("linearDepth", false);
+        pShaderQuad->setBool("linearDepth", !ortho);
         pShaderQuad->setFloat("nearPlane", nearPlane);
         pShaderQuad->setFloat("farPlane", farPlane);
 
@@ -336,9 +342,9 @@ void World::renderScene(bool drawSphere)
     }
     
     pFloor->render();
+    //pCow->render();
+    //pRobot->render();
     pCube->render();
-    pCow->render();
-    pRobot->render();
     if (pBird)
         pBird->render();
 }
@@ -450,6 +456,13 @@ void World::processInput(float deltaTime)
     }
     else {
         showDepthMap = false;
+    }
+
+    if (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) {
+        debugDepthMap = true;
+    }
+    else {
+        debugDepthMap = false;
     }
 }
 
