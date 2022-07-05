@@ -89,7 +89,7 @@ float Light::getProjFarPlane()
     return projFarPlane;
 }
 
-bool Light::isProjectionOrthographic(){
+bool Light::isOrthoProjection(){
     return orthographic;
 }
 

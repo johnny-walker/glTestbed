@@ -36,7 +36,7 @@ public:
 	float getProjFarPlane();
 	unsigned int getShadowMap();
 	unsigned int getShadowMapFBO();
-	bool isProjectionOrthographic();
+	bool isOrthoProjection();
 
 	int getId(int index);
 	glm::vec3 getColor();

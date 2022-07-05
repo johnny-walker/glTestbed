@@ -158,9 +158,10 @@ void World::render()
             
         float dirNearPlane = 0.1f, dirFarPlane = 10.f;
         float ptNearPlane = 1.f, ptFarPlane = 10.f;
+        float ptCubeNearPlane = 1.f, ptCubeFarPlane = 25.f;
         generateDirShadowMap(dirNearPlane, dirFarPlane);
         generatePtShadowMap(ptNearPlane, ptFarPlane);
-        //generatePtCubemap(ptNearPlane, ptFarPlane);
+        //generatePtCubemap(ptCubeNearPlane, ptCubeFarPlane);
 
         if (showDepthMap) {
             renderShadowMap();
@@ -171,7 +172,7 @@ void World::render()
 
             configDirLightShadowMap();
             configPtLightShadowMap(ptNearPlane, ptFarPlane);
-            //configPtLightCubemap(ptFarPlane);
+            //configPtLightCubemap(ptCubeFarPlane);
 
             renderScene();
         }
@@ -299,13 +300,14 @@ void World::configPtLightCubemap(float farPlane)
 void World::renderShadowMap()
 {
     if (pCtrlLight) {
-        bool ortho = pCtrlLight->isProjectionOrthographic();
+        // ortho {true: linear, false: nonlinear}
+        bool ortho = pCtrlLight->isOrthoProjection();
         unsigned int depthMap = pCtrlLight->getShadowMap();
         float nearPlane = pCtrlLight->getProjNearPlane();
         float farPlane = pCtrlLight->getProjFarPlane();
 
         pShaderQuad->use();
-        pShaderQuad->setBool("linearDepth", !ortho);
+        pShaderQuad->setBool("Convert2Linear", !ortho); 
         pShaderQuad->setFloat("nearPlane", nearPlane);
         pShaderQuad->setFloat("farPlane", farPlane);
 
