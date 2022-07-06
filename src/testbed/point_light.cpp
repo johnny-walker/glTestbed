@@ -1,7 +1,8 @@
 #include "point_light.h"
 
-PointLight::PointLight(int id, int width, int height) :
-Light(id, width, height) 
+PointLight::PointLight(int id, int width, int height, bool cubemap) :
+Light(id, width, height),
+useCubemap(cubemap)
 {
 }
 
@@ -13,8 +14,11 @@ PointLight::~PointLight()
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
     Light::init(pShader, pCamera);
-    initShadowMapTexture();
-    //initCubemapTexture();
+
+    if (useCubemap)
+        initCubemapTexture();
+    else
+        initShadowMapTexture();
 }
 
 void PointLight::drawPointSphere(bool flag) {

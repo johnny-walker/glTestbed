@@ -98,21 +98,24 @@ bool World::init()
 
     // init 2 point lights and 2 direction lights
     pShaderWorld->use();
+    //lightModel = 1;
+    ptCubemap = true;
+    pShaderWorld->setBool("ptLights.cubemap", ptCubemap);
 
-    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
+    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight, ptCubemap);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.f, 1.5f, 1.5f);
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
-
-    pPtLight = new PointLight(1, scrWidth, scrHeight);
+    
+    pPtLight = new PointLight(1, scrWidth, scrHeight, ptCubemap);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.f, 1.5f, -3.5f);
     pPtLight->setPrimaryColor(4);   //green      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
-
+    
     pShaderWorld->setInt("ptLights.count", (int) ptLights.size());
 
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
@@ -121,17 +124,15 @@ bool World::init()
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-
+    
     pDirLight = new DirLight(1, scrWidth, scrHeight);
     pDirLight->init(pShaderWorld, pCamera);
     pDirLight->setPos(2.f, 2.f, -3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-
+    
     pShaderWorld->setInt("dirLights.count", (int) dirLights.size());
-
-    //lightModel = 1;
 
     return true;
 }
@@ -160,8 +161,10 @@ void World::render()
         float ptNearPlane = 1.f, ptFarPlane = 10.f;
         float ptCubeNearPlane = 1.f, ptCubeFarPlane = 25.f;
         generateDirShadowMap(dirNearPlane, dirFarPlane);
-        generatePtShadowMap(ptNearPlane, ptFarPlane);
-        //generatePtCubemap(ptCubeNearPlane, ptCubeFarPlane);
+        if (ptCubemap)
+            generatePtCubemap(ptCubeNearPlane, ptCubeFarPlane);
+        else
+            generatePtShadowMap(ptNearPlane, ptFarPlane);
 
         if (showDepthMap) {
             renderShadowMap();
@@ -171,8 +174,10 @@ void World::render()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             configDirLightShadowMap();
-            configPtLightShadowMap(ptNearPlane, ptFarPlane);
-            //configPtLightCubemap(ptCubeFarPlane);
+            if (ptCubemap)
+                configPtLightCubemap(ptCubeFarPlane);
+            else
+                configPtLightShadowMap(ptNearPlane, ptFarPlane);
 
             renderScene();
         }
@@ -307,7 +312,7 @@ void World::renderShadowMap()
         float farPlane = pCtrlLight->getProjFarPlane();
 
         pShaderQuad->use();
-        pShaderQuad->setBool("Convert2Linear", !ortho); 
+        pShaderQuad->setBool("convert2Linear", !ortho); 
         pShaderQuad->setFloat("nearPlane", nearPlane);
         pShaderQuad->setFloat("farPlane", farPlane);
 

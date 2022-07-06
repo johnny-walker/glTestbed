@@ -36,8 +36,10 @@ struct PointLights {
     sampler2D shadowMap0;
     sampler2D shadowMap1;
     
-    // cubemap
     bool debug;
+
+    // cubemap
+    bool cubemap;
     samplerCube cubeMap0;
     samplerCube cubeMap1;
 };  
@@ -129,14 +131,16 @@ vec3 PtCubemapDebug(int id)
     return vec3(closestDepth);
 }
 
-vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
+vec3 PointLighting(vec3 norm, vec3 viewDir, int id, bool cubemap) 
 {
     vec4 wPosLightSpace = ptLights.matrics[id] * vec4(fs_in.WorldPos, 1.0); 
 
     //debug code for cubemap
     if (ptLights.debug) {
-        return PtShadowDebug(wPosLightSpace, id);
-        //return PtCubemapDebug(id);
+        if (cubemap)
+            return PtCubemapDebug(id);
+        else
+            return PtShadowDebug(wPosLightSpace, id);
     }
 
     vec3 sumLight = vec3(0.f);
@@ -162,9 +166,13 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
 
     // check shadow
-    float shadow = PtShadowCalculation(wPosLightSpace, lightDir, id);
-    //float shadow = PtCubemapShadowCalculation(id);
- 
+    float shadow = 0.f;
+    if (cubemap)
+        shadow = PtCubemapShadowCalculation(id);
+    else
+        shadow = PtShadowCalculation(wPosLightSpace, lightDir, id);
+
+    shadow = 0.f;
     sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     return sumLight;
 }
@@ -247,7 +255,7 @@ vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir)
         dirSumLight += DirectionLighting(norm, viewDir, i);
     }
     for (int i=0; i<ptLights.count; i++) {
-        ptSumLight += PointLighting(norm, viewDir, i);
+        ptSumLight += PointLighting(norm, viewDir, i, ptLights.cubemap);
     }
     return ptSumLight + dirSumLight;
 }
@@ -268,7 +276,7 @@ void main()
         result = BlinnPhong_Lighting(norm, viewDir);
     } else if (lightingModel == 1) {
         for (int i=0; i<ptLights.count; i++) {
-            result += PointLighting(norm, viewDir, i);
+            result += PointLighting(norm, viewDir, i, ptLights.cubemap);
         }
     } else if (lightingModel == 2) {
         for (int i=0; i<dirLights.count; i++) {

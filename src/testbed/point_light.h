@@ -11,7 +11,7 @@ private:
 	float drawScale = 0.15f;
 
 public:
-	PointLight(int id, int width, int height);
+	PointLight(int id, int width, int height, bool cubemap = true);
 	~PointLight();
 
 	void init(Shader* pShader, Camera* pCamera);
@@ -25,6 +25,7 @@ public:
 	unsigned int getCubemapFBO();
 
 private:
+	bool useCubemap = true;
 	unsigned int depthCubemapFBO = 0;
 	unsigned int depthCubemap = 0;
 	std::vector<glm::mat4> shadowTransforms;

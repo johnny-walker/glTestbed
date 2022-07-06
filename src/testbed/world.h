@@ -73,6 +73,7 @@ private:
 
 private:
 	// point light cubemap
+	bool ptCubemap = false;
 	Shader* pShaderCubemap = nullptr;
 
 };
