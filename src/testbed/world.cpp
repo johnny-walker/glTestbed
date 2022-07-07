@@ -42,6 +42,7 @@ bool World::init()
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     // init shaders
     pShaderWorld = new Shader("world.vs", "world.fs");
@@ -59,7 +60,6 @@ bool World::init()
     pShaderShadow->use();
     pShaderShadow->setInt("texture_diffuse", 0);
     pShaderShadow->setInt("shadowMap", 1);
-
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
@@ -82,8 +82,8 @@ bool World::init()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    //pCube->setPos(-6.5f, 0.f, -12.5f);
-    pCube->setPos(0.f, 0.f, 0.f);
+    pCube->setPos(-6.5f, 0.f, -12.5f);
+    //pCube->setPos(0.f, 0.f, 0.f);
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
@@ -97,9 +97,9 @@ bool World::init()
     }
 
     // init 2 point lights and 2 direction lights
-    pShaderWorld->use();
-    //lightModel = 1;
+    lightModel = 0;
     ptCubemap = true;
+    pShaderWorld->use();
     pShaderWorld->setBool("ptLights.cubemap", ptCubemap);
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight, ptCubemap);
@@ -115,7 +115,7 @@ bool World::init()
     pPtLight->setPrimaryColor(4);   //green      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
-    
+
     pShaderWorld->setInt("ptLights.count", (int) ptLights.size());
 
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
@@ -124,14 +124,14 @@ bool World::init()
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    
+
     pDirLight = new DirLight(1, scrWidth, scrHeight);
     pDirLight->init(pShaderWorld, pCamera);
     pDirLight->setPos(2.f, 2.f, -3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    
+
     pShaderWorld->setInt("dirLights.count", (int) dirLights.size());
 
     return true;
@@ -232,19 +232,21 @@ void World::generatePtCubemap(float nearPlane, float farPlane)
     setShader(pShaderCubemap);
     pShaderCubemap->setFloat("farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
+        cubemapFBO = ptLights[i]->getCubemapFBO();
+        glBindFramebuffer(GL_FRAMEBUFFER, cubemapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
         shadowMatrices = ptLights[i]->createCubemapMatrix(nearPlane, farPlane);
         for (int face = 0; face < 6; face++) {
             pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(face) + "]", shadowMatrices[face]);
         }
         pShaderCubemap->setVec3("lightPos", ptLights[i]->getPos());
 
-        cubemapFBO = ptLights[i]->getCubemapFBO();
-        glBindFramebuffer(GL_FRAMEBUFFER, cubemapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
         renderScene();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
 void World::configDirLightShadowMap()
 {
     unsigned int depthMap = 0;
@@ -279,7 +281,7 @@ void World::configPtLightShadowMap(float nearPlane, float farPlane)
         pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
 
         depthMap = ptLights[i]->getShadowMap();
-        pShaderWorld->setInt("ptLights.shadowMap" + std::to_string(i), 3 + i);
+        pShaderWorld->setInt("ptLights.shadowMap" + std::to_string(i), 5 + i);
         glActiveTexture(GL_TEXTURE5 + i);
         glBindTexture(GL_TEXTURE_2D, depthMap);
     }
@@ -296,8 +298,8 @@ void World::configPtLightCubemap(float farPlane)
         pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor()*ptLights[i]->getStrength());
 
         cubemap = ptLights[i]->getCubemap();
-        pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
-        glActiveTexture(GL_TEXTURE5 + i);
+        pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 7 + i);
+        glActiveTexture(GL_TEXTURE7 + i);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
     }
 }
@@ -349,8 +351,8 @@ void World::renderScene(bool drawSphere)
     }
     
     pFloor->render();
-    //pCow->render();
-    //pRobot->render();
+    pCow->render();
+    pRobot->render();
     pCube->render();
     if (pBird)
         pBird->render();

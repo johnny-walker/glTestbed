@@ -4,6 +4,7 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D depthMap;
+
 uniform float nearPlane;
 uniform float farPlane;
 uniform bool convert2Linear;

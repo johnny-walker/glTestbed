@@ -33,15 +33,15 @@ struct PointLights {
     float nearPlane;
     float farPlane;
 
-    sampler2D shadowMap0;
-    sampler2D shadowMap1;
-    
-    bool debug;
-
     // cubemap
     bool cubemap;
     samplerCube cubeMap0;
     samplerCube cubeMap1;
+
+    sampler2D shadowMap0;
+    sampler2D shadowMap1;
+    
+    bool debug;
 };  
 uniform PointLights ptLights;
 
@@ -103,16 +103,23 @@ vec3 PtShadowDebug(vec4 worldPosLightSpace, int id)
     return vec3(closestDepth);
 }
 
-float PtCubemapShadowCalculation(int id)
+float PointCubeDepth(vec3 fragToLight, int id)
 {
-    // get vector between fragment position and light position
-    vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
     float closestDepth = (id == 0) ?  
                          texture(ptLights.cubeMap0, fragToLight).r : 
                          texture(ptLights.cubeMap1, fragToLight).r ; 
 
     // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-    closestDepth *= ptLights.farPlane;
+    //closestDepth *= ptLights.farPlane;
+    return closestDepth;
+}
+
+float PtCubemapShadowCalculation(int id)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
+    float closestDepth = PointCubeDepth(fragToLight, id);
+
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
   
@@ -125,9 +132,8 @@ vec3 PtCubemapDebug(int id)
 {
     // get vector between fragment position and light position
     vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
-    float closestDepth = (id == 0) ?  
-                         texture(ptLights.cubeMap0, fragToLight).r : 
-                         texture(ptLights.cubeMap1, fragToLight).r ; 
+    float closestDepth = PointCubeDepth(fragToLight, id);
+    //closestDepth = length(fragToLight) / ptLights.farPlane;
     return vec3(closestDepth);
 }
 
