@@ -12,6 +12,7 @@ uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_normal;
 
+
 struct DirectLights {
     int  count;
     mat4 matrics[2];
@@ -108,9 +109,6 @@ float PointCubeDepth(vec3 fragToLight, int id)
     float closestDepth = (id == 0) ?  
                          texture(ptLights.cubeMap0, fragToLight).r : 
                          texture(ptLights.cubeMap1, fragToLight).r ; 
-
-    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-    //closestDepth *= ptLights.farPlane;
     return closestDepth;
 }
 
@@ -119,6 +117,9 @@ float PtCubemapShadowCalculation(int id)
     // get vector between fragment position and light position
     vec3 fragToLight = fs_in.WorldPos - ptLights.position[id];
     float closestDepth = PointCubeDepth(fragToLight, id);
+    
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= ptLights.farPlane;
 
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
@@ -178,7 +179,7 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id, bool cubemap)
     else
         shadow = PtShadowCalculation(wPosLightSpace, lightDir, id);
 
-    shadow = 0.f;
+    //shadow = 0.f;
     sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
     return sumLight;
 }
