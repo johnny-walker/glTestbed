@@ -14,11 +14,12 @@ PointLight::~PointLight()
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
     Light::init(pShader, pCamera);
-
+    /*
     if (useCubemap)
         initCubemapTexture();
     else
         initShadowMapTexture();
+    */
 }
 
 void PointLight::drawPointSphere(bool flag) {
@@ -32,7 +33,8 @@ void PointLight::render()
     }
 
     Light::render();    // dirty will be reset
-
+    //pos.x = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
+    
     // draw light only when lightId >= 0
     if (drawSphere) {
         pCurShader->setInt("lightId", identifier);
@@ -48,16 +50,19 @@ void PointLight::render()
 
 void PointLight::initCubemapTexture()
 {
+    const unsigned int SHADOW_WIDTH = scrWidth, SHADOW_HEIGHT = scrHeight;
     if (depthCubemapFBO == 0) {
         glGenFramebuffers(1, &depthCubemapFBO);
         // create depth cubemap texture
+
         glGenTextures(1, &depthCubemap);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemapFBO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
         for (unsigned int i = 0; i < 6; ++i) {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
-                GL_DEPTH_COMPONENT, scrWidth, scrHeight, 0,
+                GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0,
                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         }
+
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

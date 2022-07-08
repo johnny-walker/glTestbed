@@ -10,8 +10,8 @@
 class World
 {
 	// settings
-	int scrWidth = 800;
-	int scrHeight = 600;
+	unsigned int scrWidth = 800;
+	unsigned int scrHeight = 600;
 
 	float lastFrame = 0.0f;
 
@@ -73,9 +73,9 @@ private:
 
 private:
 	// point light cubemap
-	bool ptCubemap = false;
+	bool useCubemap = false;
 	Shader* pShaderCubemap = nullptr;
-
+	
 };
 #endif //WORLD_H
 

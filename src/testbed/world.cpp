@@ -15,12 +15,11 @@ World::~World()
 {
     ptLights.clear();
     dirLights.clear();
-    delete pFloor;
-    delete pCube;
-    delete pCow;
-    delete pRobot;
-    if (pBird)
-        delete pBird;
+    if (pFloor) delete pFloor;
+    if (pCube)  delete pCube;
+    if (pCow)   delete pCow;
+    if (pRobot) delete pRobot;
+    if (pBird)  delete pBird;
 }
 
 bool World::init() 
@@ -57,9 +56,11 @@ bool World::init()
     pShaderWorld->setInt("texture_normal", 2);
     pShaderWorld->setInt("lightId", (int)-1);
 
-    pShaderShadow->use();
-    pShaderShadow->setInt("texture_diffuse", 0);
-    pShaderShadow->setInt("shadowMap", 1);
+    if (pShaderShadow) {
+        pShaderShadow->use();
+        pShaderShadow->setInt("texture_diffuse", 0);
+        pShaderShadow->setInt("shadowMap", 1);
+    }
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
@@ -74,17 +75,18 @@ bool World::init()
     pCow->setAngle(glm::radians(210.f), 1);
     pCow->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pCow;
-    */
-    /*
+
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
     pRobot->init(pShaderWorld, pCamera);
     pRobot->setAngle(glm::radians(-45.f));
     pRobot->setPos(3.f, -0.5f, -1.f);
+    
     */
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-7.5f, 0.f, -6.5f);
+    //pCube->setPos(-7.5f, 0.f, -6.5f);
+    pCube->setPos(0.f, 2.f, 0.f);
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
@@ -99,18 +101,18 @@ bool World::init()
 
     // init point lights and direction lights
     lightModel = 0;
-    ptCubemap = true;
+    useCubemap = true;
     pShaderWorld->use();
-    pShaderWorld->setBool("ptLights.cubemap", ptCubemap);
+    pShaderWorld->setBool("ptLights.cubemap", useCubemap);
 
-    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight, ptCubemap);
+    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight, useCubemap);
     pPtLight->init(pShaderWorld, pCamera);
-    pPtLight->setPos(-1.f, 1.5f, 1.5f);
+    pPtLight->setPos(0.f, 1.f, 0.f);
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
     /*
-    pPtLight = new PointLight(1, scrWidth, scrHeight, ptCubemap);
+    pPtLight = new PointLight(1, scrWidth, scrHeight, useCubemap);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.f, 1.5f, -3.5f);
     pPtLight->setPrimaryColor(4);   //green      
@@ -125,14 +127,14 @@ bool World::init()
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    /*
+    
     pDirLight = new DirLight(1, scrWidth, scrHeight);
     pDirLight->init(pShaderWorld, pCamera);
     pDirLight->setPos(2.f, 2.f, -3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    */
+    
     pShaderWorld->setInt("dirLights.count", (int) dirLights.size());
 
     return true;
@@ -142,6 +144,33 @@ void World::render()
 {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // create depth cubemap texture
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthCubemapFBO[2] = { 0 };
+    unsigned int depthCubemap[2] = { 0 };
+
+    for (int i = 0; i < ptLights.size(); i++) {
+        glGenFramebuffers(1, &depthCubemapFBO[i]);
+        glGenTextures(1, &depthCubemap[i]);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap[i]);
+        for (unsigned int face = 0; face < 6; ++face) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_DEPTH_COMPONENT, 
+                SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        // attach depth texture as FBO's depth buffer
+        glBindFramebuffer(GL_FRAMEBUFFER, depthCubemapFBO[i]);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap[i], 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
@@ -159,28 +188,46 @@ void World::render()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
         float dirNearPlane = 0.1f, dirFarPlane = 10.f;
-        float ptNearPlane = 1.f, ptFarPlane = 10.f;
-        float ptCubeNearPlane = 1.f, ptCubeFarPlane = 25.f;
+        float ptNearPlane = 0.1f, ptFarPlane = 100.f;
+
         generateDirShadowMap(dirNearPlane, dirFarPlane);
-        if (ptCubemap)
-            generatePtCubemap(ptCubeNearPlane, ptCubeFarPlane);
-        //else
-        //    generatePtShadowMap(ptNearPlane, ptFarPlane);
+        //generate cubemap
+        setShader(pShaderCubemap);
+        pShaderCubemap->setFloat("farPlane", ptFarPlane);
+        for (int i = 0; i < ptLights.size(); i++) {
+            glBindFramebuffer(GL_FRAMEBUFFER, depthCubemapFBO[i]);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            std::vector<glm::mat4> shadowMatrices = ptLights[i]->createCubemapMatrix(ptNearPlane, ptFarPlane);
+            for (int face = 0; face < 6; face++) {
+                pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(face) + "]", shadowMatrices[face]);
+            }
+            pShaderCubemap->setVec3("lightPos", ptLights[i]->getPos());
+
+            renderScene(false);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
 
         if (showDepthMap) {
             renderShadowMap();
-        } else { 
+        } else {
             // render scene
             setShader(pShaderWorld);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             configDirLightShadowMap();
-            if (ptCubemap)
-                configPtLightCubemap(ptCubeFarPlane);
-            //else
-            //    configPtLightShadowMap(ptNearPlane, ptFarPlane);
+            // config cubemap
+            pShaderWorld->setFloat("ptLights.farPlane", ptFarPlane);
+            pShaderWorld->setBool("ptLights.debug", debugDepthMap);
+            for (int i = 0; i < ptLights.size(); i++) {
+                pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
+                pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
 
+                pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
+                glActiveTexture(GL_TEXTURE5 + i);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap[i]);
+            }
             renderScene();
         }
 
@@ -210,17 +257,14 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
 
 void World::generatePtCubemap(float nearPlane, float farPlane)
 {
-    unsigned int cubemapFBO = 0;
-    unsigned int cubemap = 0;
-    std::vector<glm::mat4> shadowMatrices;
     setShader(pShaderCubemap);
     pShaderCubemap->setFloat("farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
-        cubemapFBO = ptLights[i]->getCubemapFBO();
+        unsigned int cubemapFBO = ptLights[i]->getCubemapFBO();
         glBindFramebuffer(GL_FRAMEBUFFER, cubemapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-        shadowMatrices = ptLights[i]->createCubemapMatrix(nearPlane, farPlane);
+        std::vector<glm::mat4> shadowMatrices = ptLights[i]->createCubemapMatrix(nearPlane, farPlane);
         for (int face = 0; face < 6; face++) {
             pShaderCubemap->setMat4("shadowMatrices[" + std::to_string(face) + "]", shadowMatrices[face]);
         }
@@ -253,17 +297,15 @@ void World::generatePtShadowMap(float nearPlane, float farPlane)
 
 void World::configDirLightShadowMap()
 {
-    unsigned int depthMap = 0;
-    glm::mat4 lightMtrx = glm::mat4(0.f);
     pShaderWorld->use();
     pShaderWorld->setBool("dirLights.debug", debugDepthMap);
     for (int i = 0; i < dirLights.size(); i++) {
-        lightMtrx = dirLights[i]->getMatrix();
+        glm::mat4 lightMtrx = dirLights[i]->getMatrix();
         pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
         pShaderWorld->setVec3("dirLights.direction[" + std::to_string(i) + "]", dirLights[i]->getPos());
         pShaderWorld->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor()*dirLights[i]->getStrength());
 
-        depthMap = dirLights[i]->getShadowMap();
+        unsigned int depthMap = dirLights[i]->getShadowMap();
         pShaderWorld->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
         glActiveTexture(GL_TEXTURE3 + i);
         glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -272,7 +314,6 @@ void World::configDirLightShadowMap()
 
 void World::configPtLightCubemap(float farPlane)
 {
-    unsigned int cubemap = 0;
     pShaderWorld->use();
     pShaderWorld->setFloat("ptLights.farPlane", farPlane);
     pShaderWorld->setBool("ptLights.debug", debugDepthMap);
@@ -280,7 +321,7 @@ void World::configPtLightCubemap(float farPlane)
         pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
         pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor()*ptLights[i]->getStrength());
 
-        cubemap = ptLights[i]->getCubemap();
+        unsigned int cubemap = ptLights[i]->getCubemap();
         pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
         glActiveTexture(GL_TEXTURE5 + i);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
@@ -467,6 +508,9 @@ void World::processInput(float deltaTime)
     showDepthMap  = (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) ? true : false;
     debugDepthMap = (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) ? true : false;
 
+    if (glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        //todo
+    }
 }
 
 void World::framebuffer_size_callback(GLFWwindow* window, int width, int height)
