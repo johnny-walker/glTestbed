@@ -83,8 +83,7 @@ bool World::init()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-7.5f, 0.f, -6.5f);
-    //pCube->setPos(0.f, 0.5f, 0.5f);
+    pCube->setPos(-6.5f, 0.f, -5.5f);
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
@@ -103,14 +102,14 @@ bool World::init()
     pShaderWorld->use();
     pShaderWorld->setBool("ptLights.cubemap", useCubemap);
 
-    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight, useCubemap);
+    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.f, 1.f, 1.f);
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
     
-    pPtLight = new PointLight(1, scrWidth, scrHeight, useCubemap);
+    pPtLight = new PointLight(1, scrWidth, scrHeight);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.f, 1.5f, -3.5f);
     pPtLight->setPrimaryColor(4);   //green      
@@ -210,12 +209,12 @@ void World::render()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
+        glViewport(0, 0, scrWidth, scrHeight);
         if (showDepthMap) {
             renderShadowMap();
         } else {
             // render scene
             setShader(pShaderWorld);
-            glViewport(0, 0, scrWidth, scrHeight);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

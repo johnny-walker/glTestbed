@@ -1,8 +1,7 @@
 #include "point_light.h"
 
-PointLight::PointLight(int id, int width, int height, bool cubemap) :
-Light(id, width, height),
-useCubemap(cubemap)
+PointLight::PointLight(int id, int width, int height) :
+Light(id, width, height)
 {
 }
 
@@ -14,12 +13,6 @@ PointLight::~PointLight()
 void PointLight::init(Shader* pShader, Camera* pCamera)
 {
     Light::init(pShader, pCamera);
-    /*
-    if (useCubemap)
-        initCubemapTexture();
-    else
-        initShadowMapTexture();
-    */
 }
 
 void PointLight::drawPointSphere(bool flag) {
@@ -28,17 +21,23 @@ void PointLight::drawPointSphere(bool flag) {
 
 void PointLight::render()
 {
- 
+
     if (dirty && drawSphere) {
         initSphere();
     }
 
     Light::render();    // dirty will be reset
-    pos.x = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
+    
 
     // draw light only when lightId >= 0
     if (drawSphere) {
         pCurShader->setInt("lightId", identifier);
+
+        float delta = 0.4f + 0.1f * identifier;
+        if (identifier % 2 == 0)
+            pos.x = static_cast<float>(sin(glfwGetTime() * delta) * 3.0);
+        else
+            pos.z = static_cast<float>(sin(glfwGetTime() * delta) * 3.0);
 
         glBindVertexArray(sphereVAO);
         glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
