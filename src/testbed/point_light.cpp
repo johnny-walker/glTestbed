@@ -33,6 +33,7 @@ void PointLight::render()
     if (drawSphere) {
         pCurShader->setInt("lightId", identifier);
 
+        // update position
         float delta = 0.4f + 0.1f * identifier;
         if (identifier % 2 == 0)
             pos.x = static_cast<float>(sin(glfwGetTime() * delta) * 2.0);

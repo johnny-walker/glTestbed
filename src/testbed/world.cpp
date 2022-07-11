@@ -282,14 +282,22 @@ void World::configDirLightShadowMap()
     }
 }
 
+//show direction light shadow map
 void World::renderShadowMap()
 {
-    if (pCtrlLight) {
+    DirLight* pdirLight = nullptr;
+    for (int i = 0; i < dirLights.size(); i++) {
+        if (dirLights[i] == pCtrlLight) {
+            pdirLight = dirLights[i];
+            break;
+        }
+    }
+    if (pdirLight) {
         // ortho {true: linear, false: nonlinear}
-        bool ortho = pCtrlLight->isOrthoProjection();
-        unsigned int depthMap = pCtrlLight->getShadowMap();
-        float nearPlane = pCtrlLight->getProjNearPlane();
-        float farPlane = pCtrlLight->getProjFarPlane();
+        bool ortho = pdirLight->isOrthoProjection();
+        unsigned int depthMap = pdirLight->getShadowMap();
+        float nearPlane = pdirLight->getProjNearPlane();
+        float farPlane = pdirLight->getProjFarPlane();
 
         pShaderQuad->use();
         pShaderQuad->setBool("convert2Linear", !ortho); 
