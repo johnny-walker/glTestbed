@@ -35,16 +35,15 @@ void PointLight::render()
 
         float delta = 0.4f + 0.1f * identifier;
         if (identifier % 2 == 0)
-            pos.x = static_cast<float>(sin(glfwGetTime() * delta) * 3.0);
+            pos.x = static_cast<float>(sin(glfwGetTime() * delta) * 2.0);
         else
-            pos.z = static_cast<float>(sin(glfwGetTime() * delta) * 3.0);
+            pos.z = static_cast<float>(sin(glfwGetTime() * delta) * 1.0);
 
         glBindVertexArray(sphereVAO);
         glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        //restore to default (-1)
-        pCurShader->setInt("lightId", -1);
+        pCurShader->setInt("lightId", -1); //restore to default (-1)
     }
 }
 

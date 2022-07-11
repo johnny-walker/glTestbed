@@ -16,7 +16,12 @@ class World
 	float lastFrame = 0.0f;
 
 	GLFWwindow* glWindow = nullptr;
+
 	Shader* pShaderWorld = nullptr;
+	Shader* pShaderShadow = nullptr;
+	Shader* pShaderQuad = nullptr;
+	Shader* pShaderCubemap = nullptr;
+
 	Camera* pCamera = nullptr;
 
 	//lights
@@ -57,21 +62,24 @@ private:
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
 
-	Shader* pShaderShadow = nullptr;
-	Shader* pShaderQuad = nullptr;
 	bool showDepthMap = false;
 	bool debugDepthMap = false;
 
+	void createPtCubemapTexture();
+	void generatePtCubemap(float nearPlane, float farPlane);
+	void configPtLightShadowMap(float farPlane);
+	
 	void generateDirShadowMap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
+
 	void renderShadowMap();
 	void renderQuad();
 
 private:
 	// point light cubemap
-	bool useCubemap = false;
-	Shader* pShaderCubemap = nullptr;
-	
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	unsigned int depthCubemapFBO[2] = { 0 };
+	unsigned int depthCubemap[2] = { 0 };
 };
 #endif //WORLD_H
 
