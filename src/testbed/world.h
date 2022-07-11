@@ -63,11 +63,7 @@ private:
 	bool debugDepthMap = false;
 
 	void generateDirShadowMap(float nearPlane, float farPlane);
-	void generatePtShadowMap(float nearPlane, float farPlane);
-	void generatePtCubemap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
-	void configPtLightShadowMap(float nearPlane, float farPlane);
-	void configPtLightCubemap(float farPlane);
 	void renderShadowMap();
 	void renderQuad();
 

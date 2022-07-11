@@ -28,13 +28,14 @@ void PointLight::drawPointSphere(bool flag) {
 
 void PointLight::render()
 {
+ 
     if (dirty && drawSphere) {
         initSphere();
     }
 
     Light::render();    // dirty will be reset
-    //pos.x = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
-    
+    pos.x = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
+
     // draw light only when lightId >= 0
     if (drawSphere) {
         pCurShader->setInt("lightId", identifier);
@@ -48,40 +49,8 @@ void PointLight::render()
     }
 }
 
-void PointLight::initCubemapTexture()
+std::vector<glm::mat4> PointLight::createCubemapMatrix(float aspect, float nearPlane, float farPlane)
 {
-    const unsigned int SHADOW_WIDTH = scrWidth, SHADOW_HEIGHT = scrHeight;
-    if (depthCubemapFBO == 0) {
-        glGenFramebuffers(1, &depthCubemapFBO);
-        // create depth cubemap texture
-
-        glGenTextures(1, &depthCubemap);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-        for (unsigned int i = 0; i < 6; ++i) {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
-                GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0,
-                GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-        }
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-        // attach depth texture as FBO's depth buffer
-        glBindFramebuffer(GL_FRAMEBUFFER, depthCubemapFBO);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-    //std::cout <<"ID: "<<identifier<<" mapFBO : "<<depthCubemapFBO<<" map : "<<depthCubemap<<std::endl;
-}
-
-std::vector<glm::mat4> PointLight::createCubemapMatrix(float nearPlane, float farPlane)
-{
-    float aspect = (float)scrWidth / (float)scrHeight;
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, nearPlane, farPlane);
 
     shadowTransforms.clear();

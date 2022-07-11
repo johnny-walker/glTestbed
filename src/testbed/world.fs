@@ -35,12 +35,8 @@ struct PointLights {
     float farPlane;
 
     // cubemap
-    bool cubemap;
     samplerCube cubeMap0;
     samplerCube cubeMap1;
-
-    sampler2D shadowMap0;
-    sampler2D shadowMap1;
     
     bool debug;
 };  
@@ -58,131 +54,6 @@ float Shininess = 64.f;
 float Attenuate_Constant = 1.f;
 float Attenuate_Linear = 0.09f;
 float Attenuate_Quadratic = 0.032;
-
-// required when using a perspective projection matrix
-float LinearizeDepth(float depth)
-{
-    float nearPlane = ptLights.nearPlane;
-    float farPlane = ptLights.farPlane;
-
-    float z = depth * 2.0 - 1.0; // Back to NDC 
-    float closestDepth = (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));	
-    return closestDepth / farPlane;
-}
-
-// point light
-float PerspectiveDepth(vec3 projCoords, int id)
-{
-    float depth = (id == 0) ?  
-                  texture(ptLights.shadowMap0, projCoords.xy).r : 
-                  texture(ptLights.shadowMap1, projCoords.xy).r ; 
-
-    // perspective projection
-    return LinearizeDepth(depth);
-}
-
-float PtShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int id) 
-{
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
-    float currentDepth = projCoords.z;
-    if(projCoords.z > 1.0) {
-        return 0.f;
-    }
-    float closestDepth = PerspectiveDepth(projCoords, id);
-    float bias = max(0.05 * (1.0 - dot(fs_in.Normal, lightDir)), 0.005);
-    float shadow = (currentDepth-bias > closestDepth) ? 1.f : 0.0;
-
-    return shadow;
-}
-
-vec3 PtShadowDebug(vec4 fragPosLightSpace, int id)
-{
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
-    float closestDepth = PerspectiveDepth(projCoords, id);
-    return vec3(closestDepth);
-}
-
-float PointCubeDepth(vec3 fragToLight, int id)
-{
-    float closestDepth = (id == 0) ?  
-                         texture(ptLights.cubeMap0, fragToLight).r : 
-                         texture(ptLights.cubeMap1, fragToLight).r ; 
-    return closestDepth;
-}
-
-float PtCubemapShadowCalculation(int id)
-{
-    // get vector between fragment position and light position
-    vec3 fragToLight = (fs_in.FragPos - ptLights.position[id]);
-    float closestDepth = PointCubeDepth(fragToLight, id);
-    
-    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-    closestDepth *= ptLights.farPlane;
-
-    // now get current linear depth as the length between the fragment and light position
-    float currentDepth = length(fragToLight);
-  
-    float bias = 0.05f;
-    float shadow = (currentDepth-bias > closestDepth) ? 1.0 : 0.0 ;        
-    return shadow;
-}
-
-vec3 PtCubemapDebug(int id)
-{
-    // get vector between fragment position and light position
-    vec3 fragToLight = (fs_in.FragPos - ptLights.position[id]);
-    float closestDepth = PointCubeDepth(fragToLight, id);
-    //closestDepth = length(fragToLight) / ptLights.farPlane;
-    return vec3(closestDepth);
-}
-
-vec3 PointLighting(vec3 norm, vec3 viewDir, int id, bool cubemap) 
-{
-    //vec4 wPosLightSpace = ptLights.matrics[id] * vec4(fs_in.FragPos, 1.0); 
-
-    //debug code for cubemap
-    if (ptLights.debug) {
-        if (cubemap)
-            return PtCubemapDebug(id);
-        //else
-        //    return PtShadowDebug(wPosLightSpace, id);
-    }
-
-    vec3 sumLight = vec3(0.f);
-    vec3 ambient = vec3(0.f);
-    vec3 diffuse = vec3(0.f);
-    vec3 specular = vec3(0.f);
-
-    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
-    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
-
-    vec3 lightDir = normalize(ptLights.position[id] - fs_in.FragPos);  
-    float cosTheta = max(dot(norm, lightDir), 0.0);
-    
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
-
-    float distance = length(ptLights.position[id] - fs_in.FragPos);
-    float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
-    
-    // weighted sum
-    ambient = Weight_Ambient * vec3(diffuseTex) * attenuation;
-    diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
-    specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
-
-    // check shadow
-    float shadow = 0.f;
-    if (cubemap)
-        shadow = PtCubemapShadowCalculation(id);
-    //else
-    //    shadow = PtShadowCalculation(wPosLightSpace, lightDir, id);
-
-    //shadow = 0.f;
-    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
-    return sumLight;
-}
 
 // direction light
 float OrthoGrahicDepth(vec3 projCoords, int id)
@@ -254,6 +125,77 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
     return sumLight;
 }
 
+// point light
+float PointCubeDepth(vec3 fragToLight, int id)
+{
+    float closestDepth = (id == 0) ?  
+                         texture(ptLights.cubeMap0, fragToLight).r : 
+                         texture(ptLights.cubeMap1, fragToLight).r ; 
+    return closestDepth;
+}
+
+float PtCubemapShadowCalculation(int id)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = (fs_in.FragPos - ptLights.position[id]);
+    float closestDepth = PointCubeDepth(fragToLight, id);
+    
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= ptLights.farPlane;
+
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+  
+    float bias = 0.05f;
+    float shadow = (currentDepth-bias > closestDepth) ? 1.0 : 0.0 ;        
+    return shadow;
+}
+
+vec3 PtCubemapDebug(int id)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = (fs_in.FragPos - ptLights.position[id]);
+    float closestDepth = PointCubeDepth(fragToLight, id);
+    //closestDepth = length(fragToLight) / ptLights.farPlane;
+    return vec3(closestDepth);
+}
+
+vec3 PointLighting(vec3 norm, vec3 viewDir, int id) 
+{
+    //debug code for cubemap
+    if (ptLights.debug) {
+        return PtCubemapDebug(id);
+    }
+
+    vec3 sumLight = vec3(0.f);
+    vec3 ambient = vec3(0.f);
+    vec3 diffuse = vec3(0.f);
+    vec3 specular = vec3(0.f);
+
+    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
+    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
+
+    vec3 lightDir = normalize(ptLights.position[id] - fs_in.FragPos);  
+    float cosTheta = max(dot(norm, lightDir), 0.0);
+    
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    float specReflect = pow(max(dot(norm, halfwayDir), 0.0), Shininess);
+
+    float distance = length(ptLights.position[id] - fs_in.FragPos);
+    float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
+    
+    // weighted sum
+    ambient = Weight_Ambient * vec3(diffuseTex) * attenuation;
+    diffuse = Weight_Diffuse * cosTheta * vec3(diffuseTex) * attenuation;
+    specular = Weight_Specular * specReflect * vec3(spacularTex) * attenuation;
+
+    // check shadow
+    float shadow = PtCubemapShadowCalculation(id);
+
+    sumLight = (ambient + (1.f-shadow)*(diffuse + specular))*ptLights.color[id];
+    return sumLight;
+}
+
 vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir) 
 {
     vec3 ptSumLight = vec3(0.f);
@@ -262,7 +204,7 @@ vec3 BlinnPhong_Lighting(vec3 norm, vec3 viewDir)
         dirSumLight += DirectionLighting(norm, viewDir, i);
     }
     for (int i=0; i<ptLights.count; i++) {
-        ptSumLight += PointLighting(norm, viewDir, i, ptLights.cubemap);
+        ptSumLight += PointLighting(norm, viewDir, i);
     }
     return ptSumLight + dirSumLight;
 }
@@ -283,7 +225,7 @@ void main()
         result = BlinnPhong_Lighting(norm, viewDir);
     } else if (lightingModel == 1) {
         for (int i=0; i<ptLights.count; i++) {
-            result += PointLighting(norm, viewDir, i, ptLights.cubemap);
+            result += PointLighting(norm, viewDir, i);
         }
     } else if (lightingModel == 2) {
         for (int i=0; i<dirLights.count; i++) {

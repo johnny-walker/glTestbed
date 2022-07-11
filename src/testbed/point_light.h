@@ -16,10 +16,9 @@ public:
 
 	void init(Shader* pShader, Camera* pCamera);
 	void render();
-	void initCubemapTexture();
 
 	void drawPointSphere(bool flag);
-	std::vector<glm::mat4> createCubemapMatrix(float nearPlane, float farPlane);
+	std::vector<glm::mat4> createCubemapMatrix(float aspect, float nearPlane, float farPlane);
 	std::vector<glm::mat4> getCubemapMatrix();
 	unsigned int getCubemap();
 	unsigned int getCubemapFBO();
