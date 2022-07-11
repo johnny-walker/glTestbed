@@ -67,16 +67,6 @@ std::vector<glm::mat4> PointLight::getCubemapMatrix()
     return shadowTransforms;
 }
 
-unsigned int PointLight::getCubemap()
-{
-    return depthCubemap;
-}
-
-unsigned int PointLight::getCubemapFBO()
-{
-    return depthCubemapFBO;
-}
-
 void PointLight::initSphere()
 {
     glGenVertexArrays(1, &sphereVAO);

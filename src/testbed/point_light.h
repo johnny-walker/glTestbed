@@ -20,12 +20,8 @@ public:
 	void drawPointSphere(bool flag);
 	std::vector<glm::mat4> createCubemapMatrix(float aspect, float nearPlane, float farPlane);
 	std::vector<glm::mat4> getCubemapMatrix();
-	unsigned int getCubemap();
-	unsigned int getCubemapFBO();
 
 private:
-	unsigned int depthCubemapFBO = 0;
-	unsigned int depthCubemap = 0;
 	std::vector<glm::mat4> shadowTransforms;
 
 private:
