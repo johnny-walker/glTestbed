@@ -8,9 +8,9 @@ in VS_OUT {
 } fs_in;
 
 uniform vec3 viewPos;
-uniform sampler2D texture_diffuse;
-uniform sampler2D texture_specular;
-uniform sampler2D texture_normal;
+uniform sampler2D texture_diffuse1;
+uniform sampler2D texture_specular1;
+uniform sampler2D texture_normal1;
 
 
 struct DirectLights {
@@ -104,8 +104,8 @@ vec3 DirectionLighting(vec3 norm, vec3 viewDir, int id)
 
     float shadow = 0.f;
 
-    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
-    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
+    vec4 diffuseTex = texture(texture_diffuse1, fs_in.TexCoords);
+    vec4 spacularTex = texture(texture_specular1, fs_in.TexCoords);
   
     vec3 lightDir = normalize(dirLights.direction[id]);
     float cosTheta = max(dot(norm, lightDir), 0.0);
@@ -172,8 +172,8 @@ vec3 PointLighting(vec3 norm, vec3 viewDir, int id)
     vec3 diffuse = vec3(0.f);
     vec3 specular = vec3(0.f);
 
-    vec4 diffuseTex = texture(texture_diffuse, fs_in.TexCoords);
-    vec4 spacularTex = texture(texture_specular, fs_in.TexCoords);
+    vec4 diffuseTex = texture(texture_diffuse1, fs_in.TexCoords);
+    vec4 spacularTex = texture(texture_specular1, fs_in.TexCoords);
 
     vec3 lightDir = normalize(ptLights.position[id] - fs_in.FragPos);  
     float cosTheta = max(dot(norm, lightDir), 0.0);

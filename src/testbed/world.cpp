@@ -51,9 +51,6 @@ bool World::init()
 
     // specify the texture maps
     pShaderWorld->use();
-    pShaderWorld->setInt("texture_diffuse", 0);
-    pShaderWorld->setInt("texture_specular", 1);
-    pShaderWorld->setInt("texture_normal", 2);
     pShaderWorld->setInt("lightId", (int)-1);
 
     if (pShaderShadow) {
@@ -111,7 +108,7 @@ bool World::init()
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.5f, 1.5f, -5.5f);
     pPtLight->setPrimaryColor(4);   //green      
-    pPtLight->setStrength(1.f);
+    pPtLight->setStrength(0.5f);
     ptLights.push_back(pPtLight);
 
     pShaderWorld->setInt("ptLights.count", (int) ptLights.size());

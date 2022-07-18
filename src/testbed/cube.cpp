@@ -77,6 +77,9 @@ void Cube::render()
     BaseObject::render();
 
     // bind texture
+    pCurShader->setInt("texture_diffuse1", 0);
+    pCurShader->setInt("texture_specular1", 1);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, woodTexture);
     glActiveTexture(GL_TEXTURE1);
