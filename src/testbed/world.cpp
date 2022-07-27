@@ -28,12 +28,14 @@ bool World::init()
     thisWorld = this;
  
     // init openGL
-    glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwMakeContextCurrent(glWindow);
-    // setup callback
+    // keyboard callback
     glfwSetFramebufferSizeCallback(glWindow, framebuffer_size_callback);
-    glfwSetCursorPosCallback(glWindow, mouse_callback);
-    glfwSetScrollCallback(glWindow, scroll_callback);
+
+    // mouse callbacks
+    //glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetCursorPosCallback(glWindow, mouse_callback);
+    //glfwSetScrollCallback(glWindow, scroll_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -76,7 +78,7 @@ bool World::init()
     pRobot->init(pShaderWorld, pCamera);
     pRobot->setAngle(glm::radians(-45.f));
     pRobot->setPos(3.f, -0.5f, -1.f);
-    
+
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
