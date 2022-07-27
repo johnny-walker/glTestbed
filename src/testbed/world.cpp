@@ -29,6 +29,7 @@ bool World::init()
  
     // init openGL
     glfwMakeContextCurrent(glWindow);
+
     // keyboard callback
     glfwSetFramebufferSizeCallback(glWindow, framebuffer_size_callback);
 
