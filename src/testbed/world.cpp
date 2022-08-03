@@ -17,7 +17,7 @@ World::~World()
     dirLights.clear();
     if (pFloor) delete pFloor;
     if (pCube)  delete pCube;
-    if (pCow)   delete pCow;
+    if (pFirst) delete pFirst;
     if (pRobot) delete pRobot;
     if (pBird)  delete pBird;
 }
@@ -65,15 +65,36 @@ bool World::init()
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
 
-    // create scene objects
+    // create floor
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShaderWorld, pCamera);
 
-    pCow = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
-    pCow->init(pShaderWorld, pCamera);
-    pCow->setAngle(glm::radians(210.f), 1);
-    pCow->setPos(0.f, 0.25f, 0.f);
-    pCtrlTarget = pCow;
+    //initModels();
+    initGlasses();
+
+    initLights();
+    return true;
+}
+
+bool World::initGlasses()
+{
+    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
+    pFirst->init(pShaderWorld, pCamera);
+    pFirst->setAngle(glm::radians(0.f), 1);
+    pFirst->setPos(0.f, 0.25f, 0.f);
+    pFirst->setScale(0.2f);
+    pCtrlTarget = pFirst;
+
+    return true;
+}
+
+bool World::initModels()
+{
+    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    pFirst->init(pShaderWorld, pCamera);
+    pFirst->setAngle(glm::radians(210.f), 1);
+    pFirst->setPos(0.f, 0.25f, 0.f);
+    pCtrlTarget = pFirst;
 
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
     pRobot->init(pShaderWorld, pCamera);
@@ -87,7 +108,7 @@ bool World::init()
     pCube->setScale(0.5f);
 
     bool showBird = false; //loading bird takes time, false to save time
-    if (showBird) { 
+    if (showBird) {
         pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
         pBird->init(pShaderWorld, pCamera);
         pBird->setAngle(glm::radians(-90.f), 0);
@@ -96,6 +117,11 @@ bool World::init()
         pBird->setScale(0.08f);
     }
 
+    return true;
+}
+
+bool World::initLights()
+{
     // init point lights and direction lights
     lightModel = 0;
     pShaderWorld->use();
@@ -106,15 +132,15 @@ bool World::init()
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
-    
+    /*
     pPtLight = new PointLight(1, scrWidth, scrHeight);
     pPtLight->init(pShaderWorld, pCamera);
     pPtLight->setPos(-1.5f, 1.5f, -5.5f);
     pPtLight->setPrimaryColor(4);   //green      
     pPtLight->setStrength(0.5f);
     ptLights.push_back(pPtLight);
-
-    pShaderWorld->setInt("ptLights.count", (int) ptLights.size());
+    */
+    pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
 
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
 
@@ -123,15 +149,15 @@ bool World::init()
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    
+    /*
     pDirLight = new DirLight(1, scrWidth, scrHeight);
     pDirLight->init(pShaderWorld, pCamera);
     pDirLight->setPos(2.f, 2.f, -3.f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-
-    pShaderWorld->setInt("dirLights.count", (int) dirLights.size());
+    */
+    pShaderWorld->setInt("dirLights.count", (int)dirLights.size());
 
     return true;
 }
@@ -320,7 +346,7 @@ void World::setShader(Shader* pShaderObj)
     
     if (pFloor) pFloor->setShader(pShaderObj);
     if (pCube)  pCube->setShader(pShaderObj);
-    if (pCow)   pCow->setShader(pShaderObj);
+    if (pFirst) pFirst->setShader(pShaderObj);
     if (pRobot) pRobot->setShader(pShaderObj);
     if (pBird)  pBird->setShader(pShaderObj);
 }
@@ -336,7 +362,7 @@ void World::renderScene(bool drawSphere)
     }
     
     if (pFloor) pFloor->render();
-    if (pCow)   pCow->render();
+    if (pFirst) pFirst->render();
     if (pRobot) pRobot->render();
     if (pCube)  pCube->render();
     if (pBird)  pBird->render();
@@ -401,7 +427,7 @@ void World::processInput(float deltaTime)
 
     // switch target object for hotkey controls
     if (glfwGetKey(glWindow, GLFW_KEY_F1) == GLFW_PRESS) {
-        pCtrlTarget = pCow;
+        pCtrlTarget = pFirst;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
         pCtrlTarget = pRobot;

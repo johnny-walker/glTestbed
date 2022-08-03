@@ -31,7 +31,7 @@ class World
 	//scene
 	Floor* pFloor = nullptr;
 	Cube* pCube = nullptr;
-	BaseModel* pCow = nullptr;
+	BaseModel* pFirst = nullptr;
 	BaseModel* pRobot = nullptr;
 	BaseModel* pBird = nullptr;
 
@@ -53,6 +53,9 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
+	bool initModels();
+	bool initGlasses();
+	bool initLights();
 	void setShader(Shader* pShaderObj);
 	void renderScene(bool drawSphere = true);
 	void processInput(float deltaTime = 0.f);
