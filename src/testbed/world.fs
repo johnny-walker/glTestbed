@@ -48,7 +48,7 @@ uniform int lightingModel;  // light controls
 
 // constant
 float Weight_Ambient = 0.05f;
-float Weight_Diffuse = 1.0f;// 0.85f;
+float Weight_Diffuse = 1.0f;//0.85f;
 float Weight_Specular = 0.1f;
 float Shininess = 64.f;
 float Attenuate_Constant = 1.f;

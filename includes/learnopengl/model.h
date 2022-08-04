@@ -161,7 +161,16 @@ private:
         // 4. height maps
         std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        
+        // 5. ORM maps
+        std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
+        textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
+        // 6. transmission maps
+        std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
+        textures.insert(textures.end(), transMaps.begin(), transMaps.end());
+        // 7. environment maps
+        std::vector<Texture> envMaps = loadMaterialTextures(material, aiTextureType_ENVIRONMENT, "texture_env");
+        textures.insert(textures.end(), envMaps.begin(), envMaps.end());
+
         // return a mesh object created from the extracted mesh data
         return Mesh(vertices, indices, textures);
     }
