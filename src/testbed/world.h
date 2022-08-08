@@ -24,6 +24,8 @@ class World
 
 	Camera* pCamera = nullptr;
 
+	bool pbrRendering = true;
+
 	//lights
 	std::vector<PointLight*> ptLights; 
 	std::vector<DirLight*> dirLights;
@@ -54,8 +56,8 @@ public:
 
 private:
 	bool initModels();
-	bool initGlasses();
-	bool initLights();
+	bool initPBR();
+	bool initLights(int count=1);
 	void setShader(Shader* pShaderObj);
 	void renderScene(bool drawSphere = true);
 	void processInput(float deltaTime = 0.f);

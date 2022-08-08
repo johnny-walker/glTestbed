@@ -77,6 +77,8 @@ void Cube::render()
     BaseObject::render();
 
     // bind texture
+    pCurShader->setBool("ormMap", false);
+
     pCurShader->setInt("texture_diffuse1", 0);
     pCurShader->setInt("texture_specular1", 1);
 

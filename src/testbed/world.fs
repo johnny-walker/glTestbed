@@ -47,13 +47,13 @@ uniform int lightId;        // draw specified point light color
 uniform int lightingModel;  // light controls
 
 // constant
-float Weight_Ambient = 0.05f;
-float Weight_Diffuse = 1.0f;//0.85f;
-float Weight_Specular = 0.1f;
-float Shininess = 64.f;
-float Attenuate_Constant = 1.f;
-float Attenuate_Linear = 0.09f;
-float Attenuate_Quadratic = 0.032;
+const float Weight_Ambient = 0.05f;
+const float Weight_Diffuse = 1.0f;//0.85f;
+const float Weight_Specular = 0.1f;
+const float Shininess = 64.f;
+const float Attenuate_Constant = 1.f;
+const float Attenuate_Linear = 0.09f;
+const float Attenuate_Quadratic = 0.032;
 
 // direction light
 float OrthoGrahicDepth(vec3 projCoords, int id)

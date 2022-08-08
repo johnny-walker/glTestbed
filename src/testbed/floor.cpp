@@ -40,6 +40,9 @@ void Floor::init(Shader* pShader, Camera* pCamera)
 void Floor::render()
 {
     BaseObject::render();
+    pCurShader->setBool("ormMap", false);
+
+    pCurShader->setInt("texture_diffuse1", 0);
 
     // bind texture
     glActiveTexture(GL_TEXTURE0);

@@ -47,20 +47,25 @@ bool World::init()
     glEnable(GL_CULL_FACE);
 
     // init shaders
-    pShaderWorld = new Shader("world.vs", "world.fs");
+    if (pbrRendering)
+        pShaderWorld = new Shader("pbr_model.vs", "pbr_model.fs");
+    else
+        pShaderWorld = new Shader("world.vs", "world.fs");
+
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
     pShaderQuad = new Shader("quad.vs", "quad.fs");
     pShaderCubemap = new Shader("cubemap_depth.vs", "cubemap_depth.fs", "cubemap_depth.gs");
 
-    // specify the texture maps
+    if (!pShaderShadow)
+        return false;
+
     pShaderWorld->use();
     pShaderWorld->setInt("lightId", (int)-1);
+    pShaderWorld->setBool("ormMap", false);
 
-    if (pShaderShadow) {
-        pShaderShadow->use();
-        pShaderShadow->setInt("texture_diffuse", 0);
-        pShaderShadow->setInt("shadowMap", 1);
-    }
+    // specify the texture maps
+    //pShaderShadow->setInt("texture_diffuse1", 0);
+    //pShaderShadow->setInt("shadowMap", 1);
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
@@ -68,23 +73,24 @@ bool World::init()
     // create floor
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShaderWorld, pCamera);
+    
 
-    //initModels();
-    initGlasses();
+    //initPBR();
+    initModels();
 
     initLights();
     return true;
 }
 
-bool World::initGlasses()
+bool World::initPBR()
 {
+    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/backpack/backpack.obj");
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
     pFirst->init(pShaderWorld, pCamera);
     pFirst->setAngle(glm::radians(0.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
-
     return true;
 }
 
@@ -96,17 +102,19 @@ bool World::initModels()
     pFirst->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pFirst;
 
+    /*
     pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
     pRobot->init(pShaderWorld, pCamera);
     pRobot->setAngle(glm::radians(-45.f));
     pRobot->setPos(3.f, -0.5f, -1.f);
+    */
 
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
     pCube->setPos(-6.5f, 0.f, -5.5f);
     pCube->setScale(0.5f);
-
+    
     bool showBird = false; //loading bird takes time, false to save time
     if (showBird) {
         pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
@@ -120,7 +128,8 @@ bool World::initModels()
     return true;
 }
 
-bool World::initLights()
+// at most 2 for point lights and directional lights
+bool World::initLights(int count)
 {
     // init point lights and direction lights
     lightModel = 0;
@@ -128,18 +137,19 @@ bool World::initLights()
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShaderWorld, pCamera);
-    pPtLight->setPos(-1.f, 1.f, 2.f);
+    pPtLight->setPos(-1.f, 1.3f, 1.5f);
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
-    /*
-    pPtLight = new PointLight(1, scrWidth, scrHeight);
-    pPtLight->init(pShaderWorld, pCamera);
-    pPtLight->setPos(-1.5f, 1.5f, -5.5f);
-    pPtLight->setPrimaryColor(4);   //green      
-    pPtLight->setStrength(0.5f);
-    ptLights.push_back(pPtLight);
-    */
+
+    if (count > 1) {
+        pPtLight = new PointLight(1, scrWidth, scrHeight);
+        pPtLight->init(pShaderWorld, pCamera);
+        pPtLight->setPos(-1.5f, 1.5f, -5.5f);
+        pPtLight->setPrimaryColor(4);   //green      
+        pPtLight->setStrength(0.5f);
+        ptLights.push_back(pPtLight);
+    }
     pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
 
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
@@ -149,14 +159,14 @@ bool World::initLights()
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);
-    /*
-    pDirLight = new DirLight(1, scrWidth, scrHeight);
-    pDirLight->init(pShaderWorld, pCamera);
-    pDirLight->setPos(2.f, 2.f, -3.f);
-    pDirLight->setPrimaryColor(0);  //white
-    pDirLight->setStrength(1.f);
-    dirLights.push_back(pDirLight);
-    */
+    if (count > 1) {
+        pDirLight = new DirLight(1, scrWidth, scrHeight);
+        pDirLight->init(pShaderWorld, pCamera);
+        pDirLight->setPos(2.f, 2.f, -3.f);
+        pDirLight->setPrimaryColor(0);  //white
+        pDirLight->setStrength(1.f);
+        dirLights.push_back(pDirLight);
+    }
     pShaderWorld->setInt("dirLights.count", (int)dirLights.size());
 
     return true;
@@ -191,6 +201,7 @@ void World::render()
         generatePtCubemap(ptNearPlane, ptFarPlane);
 
         if (showDepthMap) {
+            // debug (hotkey-z)
             renderShadowMap();
         } else {
             // render scene

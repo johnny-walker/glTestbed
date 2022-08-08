@@ -57,6 +57,12 @@
     <None Include="src\testbed\cubemap_depth.gs">
       <Filter>Src\Shaders</Filter>
     </None>
+    <None Include="src\testbed\pbr_model.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\pbr_model.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Src">

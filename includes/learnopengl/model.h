@@ -161,13 +161,22 @@ private:
         // 4. height maps
         std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        // 5. ORM maps
+        // 5. custom AO maps
+        std::vector<Texture> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+        textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+        // 6. custom Roughness maps
+        std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_ROUGHNESS, "texture_roughness");
+        textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+        // 7. custom Metallic maps
+        std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+        textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+        // 8. custom ORM maps
         std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
         textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
-        // 6. transmission maps
+        // 9. custom transmission maps
         std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
         textures.insert(textures.end(), transMaps.begin(), transMaps.end());
-        // 7. environment maps
+        // 10. custom environment maps
         std::vector<Texture> envMaps = loadMaterialTextures(material, aiTextureType_ENVIRONMENT, "texture_env");
         textures.insert(textures.end(), envMaps.begin(), envMaps.end());
 
