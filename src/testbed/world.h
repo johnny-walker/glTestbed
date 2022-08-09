@@ -35,7 +35,6 @@ class World
 	Cube* pCube = nullptr;
 	BaseModel* pFirst = nullptr;
 	BaseModel* pRobot = nullptr;
-	BaseModel* pBird = nullptr;
 
 	//control targets
 	int lightModel = 0;

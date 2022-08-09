@@ -19,7 +19,6 @@ World::~World()
     if (pCube)  delete pCube;
     if (pFirst) delete pFirst;
     if (pRobot) delete pRobot;
-    if (pBird)  delete pBird;
 }
 
 bool World::init() 
@@ -75,8 +74,8 @@ bool World::init()
     pFloor->init(pShaderWorld, pCamera);
     
 
-    //initPBR();
-    initModels();
+    initPBR();
+    //initModels();
 
     initLights();
     return true;
@@ -84,13 +83,19 @@ bool World::init()
 
 bool World::initPBR()
 {
-    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/backpack/backpack.obj");
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
     pFirst->init(pShaderWorld, pCamera);
-    pFirst->setAngle(glm::radians(0.f), 1);
+    pFirst->setAngle(glm::radians(45.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
+
+    pCube = new Cube(scrWidth, scrHeight);
+    pCube->init(pShaderWorld, pCamera);
+    pCube->setAngle(glm::radians(60.f), 1);
+    pCube->setPos(-6.5f, 0.f, -5.5f);
+    pCube->setScale(0.5f);
+
     return true;
 }
 
@@ -114,24 +119,14 @@ bool World::initModels()
     pCube->setAngle(glm::radians(60.f), 1);
     pCube->setPos(-6.5f, 0.f, -5.5f);
     pCube->setScale(0.5f);
-    
-    bool showBird = false; //loading bird takes time, false to save time
-    if (showBird) {
-        pBird = new BaseModel(scrWidth, scrHeight, "../../resources/objects/bird/12213_Bird_v1_l3.obj");
-        pBird->init(pShaderWorld, pCamera);
-        pBird->setAngle(glm::radians(-90.f), 0);
-        pBird->setAngle(glm::radians(75.f), 2);
-        pBird->setPos(-30.f, -6.f, 35.f);
-        pBird->setScale(0.08f);
-    }
 
     return true;
 }
 
-// at most 2 for point lights and directional lights
+// at most 2 for point lights and direction lights
 bool World::initLights(int count)
 {
-    // init point lights and direction lights
+    // init point lights 
     lightModel = 0;
     pShaderWorld->use();
 
@@ -152,6 +147,7 @@ bool World::initLights(int count)
     }
     pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
 
+    // init direction lights
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
 
     pDirLight->init(pShaderWorld, pCamera);
@@ -176,6 +172,9 @@ void World::render()
 {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     createPtCubemapTexture();
 
@@ -218,6 +217,7 @@ void World::render()
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }
+    glDisable(GL_BLEND);
 }
 
 void World::createPtCubemapTexture()
@@ -359,7 +359,6 @@ void World::setShader(Shader* pShaderObj)
     if (pCube)  pCube->setShader(pShaderObj);
     if (pFirst) pFirst->setShader(pShaderObj);
     if (pRobot) pRobot->setShader(pShaderObj);
-    if (pBird)  pBird->setShader(pShaderObj);
 }
 
 void World::renderScene(bool drawSphere)
@@ -376,7 +375,6 @@ void World::renderScene(bool drawSphere)
     if (pFirst) pFirst->render();
     if (pRobot) pRobot->render();
     if (pCube)  pCube->render();
-    if (pBird)  pBird->render();
 }
 
 void World::terminate() 
@@ -447,8 +445,7 @@ void World::processInput(float deltaTime)
         pCtrlTarget = pCube;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F4) == GLFW_PRESS) {
-        if (pBird)
-            pCtrlTarget = pBird;
+        // todo
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
         if (ptLights.size() > 0)

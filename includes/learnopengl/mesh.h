@@ -57,46 +57,51 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader &shader) 
+    void Draw(Shader& shader)
     {
         // bind appropriate textures
-        unsigned int diffuseNr   = 1;
-        unsigned int specularNr  = 1;
-        unsigned int normalNr    = 1;
-        unsigned int heightNr    = 1;
-        unsigned int ormNr       = 1;
-        unsigned int ambientNr   = 1;
+        unsigned int diffuseNr = 1;
+        unsigned int specularNr = 1;
+        unsigned int normalNr = 1;
+        unsigned int aoNr = 1;
         unsigned int roughnessNr = 1;
-        unsigned int metallicNr  = 1;
-        unsigned int transNr     = 1;
-        unsigned int envNr       = 1;
-        for(unsigned int i = 0; i < textures.size(); i++)
+        unsigned int metallicNr = 1;
+        unsigned int ormNr = 1;
+        unsigned int transNr = 1;
+        unsigned int envNr = 1;
+        for (unsigned int i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
             // retrieve texture number (the N in diffuse_textureN)
             string number;
             string name = textures[i].type;
-            if(name == "texture_diffuse")
+            if (name == "texture_diffuse") {
                 number = std::to_string(diffuseNr++);
-            else if(name == "texture_specular")
-                number = std::to_string(specularNr++); 
-            else if(name == "texture_normal")
-                number = std::to_string(normalNr++); 
-            else if(name == "texture_height")
-                number = std::to_string(heightNr++); 
-            else if (name == "texture_roughness")
+            } else if (name == "texture_specular") {
+                number = std::to_string(specularNr++);
+                glUniform1i(glGetUniformLocation(shader.ID, "specularMap"), (int)true);
+            } else if (name == "texture_normal") {
+                number = std::to_string(normalNr++);
+                glUniform1i(glGetUniformLocation(shader.ID, "normalMap"), (int)true);
+            } else if (name == "texture_roughness") {
+                glUniform1i(glGetUniformLocation(shader.ID, "roughnesslMap"), (int)true);
                 number = std::to_string(roughnessNr++);
-            else if (name == "texture_metallic")
+            } else if (name == "texture_metallic") {
+                glUniform1i(glGetUniformLocation(shader.ID, "metalliclMap"), (int)true);
                 number = std::to_string(metallicNr++);
-            else if (name == "texture_ao")
-                number = std::to_string(ambientNr++);
-            else if (name == "texture_orm")
-                number = std::to_string(ormNr++); 
-            else if (name == "texture_trans")
-                number = std::to_string(transNr++); 
-            else if (name == "texture_env")
-                number = std::to_string(envNr++); 
- 
+            } else if (name == "texture_ao") {
+                glUniform1i(glGetUniformLocation(shader.ID, "aoMap"), (int)true);
+                number = std::to_string(aoNr++);
+            } else if (name == "texture_orm") {
+                glUniform1i(glGetUniformLocation(shader.ID, "ormMap"), (int)true);
+                number = std::to_string(ormNr++);
+            } else if (name == "texture_trans") {
+                glUniform1i(glGetUniformLocation(shader.ID, "transMap"), (int)true);
+                number = std::to_string(transNr++);
+            } else if (name == "texture_env") {
+                glUniform1i(glGetUniformLocation(shader.ID, "envMap"), (int)true);
+                number = std::to_string(envNr++);
+            }    
             // now set the sampler to the correct texture unit
             //cout << (name + number).c_str() << endl;
             glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);

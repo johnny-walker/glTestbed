@@ -34,10 +34,14 @@ void BaseObject::render()
     pCurShader->setMat4("view", view);
     pCurShader->setMat4("model", model);
 
-    pCurShader->setBool("aoMap", false);
+    pCurShader->setBool("specularMap", false);
+    pCurShader->setBool("normalMap", false);
     pCurShader->setBool("roughnessMap", false);
     pCurShader->setBool("metallicMap", false);
     pCurShader->setBool("ormMap", false);
+    pCurShader->setBool("aoMap", false);
+    pCurShader->setBool("transMap", false);
+    pCurShader->setBool("envMap", false);
 
     dirty = false;
 }
@@ -149,10 +153,16 @@ unsigned int BaseObject::loadTexture(char const* path)
 void BaseObject::processInput(GLFWwindow* glWindow, float delta)
 {
     if (glfwGetKey(glWindow, GLFW_KEY_R) == GLFW_PRESS) {
-        updateAngle(delta);        //counter clockwise
+        updateAngle(delta, 1);        //r:counter clockwise of y-axis
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS) {
-        updateAngle(-delta);       //clockwise
+        updateAngle(-delta, 1);       //t:clockwise of y-axis
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F) == GLFW_PRESS) {
+        updateAngle(delta, 0);        //f:counter clockwise of x-axis
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_G) == GLFW_PRESS) {
+        updateAngle(-delta, 0);       //g:clockwise of x-axis
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS) {
         updatePos(-delta, 0, 0);    //x:left

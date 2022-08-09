@@ -128,7 +128,7 @@ vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo,
     // scale light by NdotL
     float NdotL = max(dot(N, L), 0.0);        
 
-    vec3 iLo = (kD * albedo / PI + specular) * radiance * NdotL;
+    vec3 iLo = (kD * albedo/PI + specular) * radiance * NdotL;
 
     // outgoing radiance (Lo)
     return  iLo;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
@@ -223,7 +223,9 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
     for(int i = 0; i < ptLights.count; ++i) {
         vec3 L = normalize(ptLights.position[i] - fs_in.FragPos);
         float distance = length(ptLights.position[i] - fs_in.FragPos);
-        float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
+        float denominator = Attenuate_Constant + Attenuate_Linear*distance
+                            /* + Attenuate_Quadratic*(distance*distance) */;    
+        float attenuation = 1.0 / denominator;
         vec3 radiance = ptLights.color[i] * attenuation;
 
         // calculate per-light radiance
@@ -249,17 +251,19 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
     return color;
 }
 
-vec3 PBR_Lighting(vec3 N, vec3 V) 
+vec4 PBR_Lighting(vec3 N, vec3 V) 
 {
-    vec3 ptSumLights  = vec3(0.f);
-    vec3 dirSumLights = vec3(0.f);
-
-    vec3 albedo = pow(texture(texture_diffuse1, fs_in.TexCoords).rgb, vec3(2.2));
+    vec3 SumLights  = vec3(0.f);
 
     // sample AO, Roughness, Metallic
-    float ao        = 1.f;
+    float ao        = 0.f;
     float roughness = 0.f;
     float metallic  = 0.f;
+    float alpha     = 1.f;
+
+    vec4 diffuse = texture(texture_diffuse1, fs_in.TexCoords);
+    vec3 albedo  = pow(diffuse.rgb, vec3(2.2));
+    alpha        = diffuse.a;
 
     if (ormMap) {
         vec4 ormTex = texture(texture_orm1, fs_in.TexCoords);
@@ -278,12 +282,12 @@ vec3 PBR_Lighting(vec3 N, vec3 V)
     F0 = mix(F0, albedo, metallic);
 
     if (lightingModel == 0 || lightingModel == 1) {
-        ptSumLights += PointLighting(N, V, albedo, F0, ao, roughness, metallic);
+        SumLights += PointLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
     if (lightingModel == 0 || lightingModel == 2) {
-        dirSumLights += DirectionLighting(N, V, albedo, F0, ao, roughness, metallic);
+        SumLights += DirectionLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
-    return ptSumLights + dirSumLights;
+    return vec4(SumLights, alpha);
 }
 
 void main()
@@ -294,10 +298,8 @@ void main()
         return;
     }
 
-    vec3 result = vec3(0.f);
     vec3 N = normalize(fs_in.Normal);
     vec3 V = normalize(viewPos - fs_in.FragPos);
 
-    result = PBR_Lighting(N, V);
-    FragColor = vec4(result, 1.0);
+    FragColor = PBR_Lighting(N, V);
 }

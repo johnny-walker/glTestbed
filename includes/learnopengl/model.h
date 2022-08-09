@@ -171,8 +171,8 @@ private:
         //std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
         //textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
         // 8. custom ORM maps
-        //std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
-        //textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
+        std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
+        textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
         // 9. custom transmission maps
         //std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
         //textures.insert(textures.end(), transMaps.begin(), transMaps.end());
