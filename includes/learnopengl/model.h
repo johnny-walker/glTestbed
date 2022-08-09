@@ -153,32 +153,32 @@ private:
         vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         // 2. specular maps
-        vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        //vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+        //textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
         // 3. normal maps
-        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+        //std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+        //textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
         // 4. height maps
-        std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+        //std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+        //textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
         // 5. custom AO maps
-        std::vector<Texture> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
-        textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+        //std::vector<Texture> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+        //textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
         // 6. custom Roughness maps
-        std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_ROUGHNESS, "texture_roughness");
-        textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+        //std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_ROUGHNESS, "texture_roughness");
+        //textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
         // 7. custom Metallic maps
-        std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
-        textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+        //std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+        //textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
         // 8. custom ORM maps
-        std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
-        textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
+        //std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
+        //textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
         // 9. custom transmission maps
-        std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
-        textures.insert(textures.end(), transMaps.begin(), transMaps.end());
+        //std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
+        //textures.insert(textures.end(), transMaps.begin(), transMaps.end());
         // 10. custom environment maps
-        std::vector<Texture> envMaps = loadMaterialTextures(material, aiTextureType_ENVIRONMENT, "texture_env");
-        textures.insert(textures.end(), envMaps.begin(), envMaps.end());
+        //std::vector<Texture> envMaps = loadMaterialTextures(material, aiTextureType_ENVIRONMENT, "texture_env");
+        //textures.insert(textures.end(), envMaps.begin(), envMaps.end());
 
         // return a mesh object created from the extracted mesh data
         return Mesh(vertices, indices, textures);

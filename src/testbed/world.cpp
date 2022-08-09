@@ -137,7 +137,7 @@ bool World::initLights(int count)
 
     PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
     pPtLight->init(pShaderWorld, pCamera);
-    pPtLight->setPos(-1.f, 1.3f, 1.5f);
+    pPtLight->setPos(-1.f, 1.2f, 1.5f);
     pPtLight->setPrimaryColor(2);   //orange      
     pPtLight->setStrength(1.f);
     ptLights.push_back(pPtLight);
@@ -155,7 +155,7 @@ bool World::initLights(int count)
     DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
 
     pDirLight->init(pShaderWorld, pCamera);
-    pDirLight->setPos(2.f, 2.f, 3.f);
+    pDirLight->setPos(3.f, 2.f, 1.5f);
     pDirLight->setPrimaryColor(0);  //white
     pDirLight->setStrength(1.f);
     dirLights.push_back(pDirLight);

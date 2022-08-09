@@ -33,6 +33,12 @@ void BaseObject::render()
     pCurShader->setMat4("projection", projection);
     pCurShader->setMat4("view", view);
     pCurShader->setMat4("model", model);
+
+    pCurShader->setBool("aoMap", false);
+    pCurShader->setBool("roughnessMap", false);
+    pCurShader->setBool("metallicMap", false);
+    pCurShader->setBool("ormMap", false);
+
     dirty = false;
 }
 

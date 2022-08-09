@@ -7,6 +7,8 @@ in VS_OUT {
     in vec2 TexCoords;
 } fs_in;
 
+uniform vec3 viewPos;
+
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
@@ -15,7 +17,11 @@ uniform sampler2D texture_roughness1;
 uniform sampler2D texture_metallic1;
 uniform sampler2D texture_orm1;
 
-uniform vec3 viewPos;
+uniform bool specularMap;
+uniform bool normalMap;
+uniform bool aoMap;
+uniform bool roughnessMap;
+uniform bool metallicMap;
 uniform bool ormMap;
 
 struct DirectLights {
@@ -47,9 +53,12 @@ uniform PointLights ptLights;
 uniform int lightId;        // draw specified point light color
 uniform int lightingModel;  // light controls
 
-const float SHADOW_BIAS = 0.05f;
-const float WEIGHT_AMBIENT = 0.05f;
-const float PI = 3.14159265359;
+const float Shadow_Bias = 0.05f;
+const float Weight_Ambient = 0.05f;
+const float Attenuate_Constant = 1.f;
+const float Attenuate_Linear = 0.09f;
+const float Attenuate_Quadratic = 0.032;
+const float PI = 3.14159265359f;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -91,37 +100,38 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo, float roughness, float metallic, int i)
+vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo, 
+                   float roughness, float metallic, int i)
 {
-        vec3 H = normalize(V + L);
+    vec3 H = normalize(V + L);
 
-        // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, roughness);   
-        float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+    // Cook-Torrance BRDF
+    float NDF = DistributionGGX(N, H, roughness);   
+    float G   = GeometrySmith(N, V, L, roughness);      
+    vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
            
-        vec3 numerator    = NDF * G * F; 
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-        vec3 specular = numerator / denominator;
+    vec3 numerator    = NDF * G * F; 
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+    vec3 specular = numerator / denominator;
         
-        // kS is equal to Fresnel
-        vec3 kS = F;
-        // for energy conservation, the diffuse and specular light can't
-        // be above 1.0 (unless the surface emits light); to preserve this
-        // relationship the diffuse component (kD) should equal 1.0 - kS.
-        vec3 kD = vec3(1.0) - kS;
-        // multiply kD by the inverse metalness such that only non-metals 
-        // have diffuse lighting, or a linear blend if partly metal (pure metals
-        // have no diffuse light).
-        kD *= 1.0 - metallic;	
+    // kS is equal to Fresnel
+    vec3 kS = F;
+    // for energy conservation, the diffuse and specular light can't
+    // be above 1.0 (unless the surface emits light); to preserve this
+    // relationship the diffuse component (kD) should equal 1.0 - kS.
+    vec3 kD = vec3(1.0) - kS;
+    // multiply kD by the inverse metalness such that only non-metals 
+    // have diffuse lighting, or a linear blend if partly metal (pure metals
+    // have no diffuse light).
+    kD *= 1.0 - metallic;	
 
-        // scale light by NdotL
-        float NdotL = max(dot(N, L), 0.0);        
+    // scale light by NdotL
+    float NdotL = max(dot(N, L), 0.0);        
 
-        vec3 iLo = (kD * albedo / PI + specular) * radiance * NdotL;
+    vec3 iLo = (kD * albedo / PI + specular) * radiance * NdotL;
 
-        // outgoing radiance (Lo)
-        return  iLo;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+    // outgoing radiance (Lo)
+    return  iLo;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
 }
 
 // direction light
@@ -153,8 +163,7 @@ vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float rou
 {
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < dirLights.count; ++i) 
-    {
+    for(int i = 0; i < dirLights.count; ++i) {
         vec3 L = normalize(dirLights.direction[i]);
         vec3 radiance = dirLights.color[i];
 
@@ -172,13 +181,11 @@ vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float rou
 
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(WEIGHT_AMBIENT) * albedo * ao;
-
+    vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
     vec3 color = ambient + Lo;
 
-    // HDR tonemapping
+    // HDR tonemapping & gamma correct
     color = color / (color + vec3(1.0));
-    // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
 
     return color;
@@ -205,19 +212,18 @@ float PtCubemapShadowCalculation(int id)
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
   
-    float shadow = (currentDepth-SHADOW_BIAS > closestDepth) ? 1.0 : 0.0 ;        
+    float shadow = (currentDepth-Shadow_Bias > closestDepth) ? 1.0 : 0.0 ;        
     return shadow;
 }
 
+// reflectance equation
 vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughness, float metallic) 
 {
-    // reflectance equation
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < ptLights.count; ++i)
-    {
+    for(int i = 0; i < ptLights.count; ++i) {
         vec3 L = normalize(ptLights.position[i] - fs_in.FragPos);
         float distance = length(ptLights.position[i] - fs_in.FragPos);
-        float attenuation = 1.0 / (distance * distance);
+        float attenuation = 1.0 / (Attenuate_Constant + Attenuate_Linear*distance +  Attenuate_Quadratic*(distance*distance));    
         vec3 radiance = ptLights.color[i] * attenuation;
 
         // calculate per-light radiance
@@ -233,13 +239,11 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
    
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(WEIGHT_AMBIENT) * albedo * ao;
-
+    vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
     vec3 color = ambient + Lo;
 
-    // HDR tonemapping
+    // HDR tonemapping & gamma correct
     color = color / (color + vec3(1.0));
-    // gamma correct
     color = pow(color, vec3(1.0/2.2)); 
 
     return color;
@@ -247,11 +251,12 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
 
 vec3 PBR_Lighting(vec3 N, vec3 V) 
 {
-    vec3 ptSumLight = vec3(0.f);
-    vec3 dirSumLight = vec3(0.f);
+    vec3 ptSumLights  = vec3(0.f);
+    vec3 dirSumLights = vec3(0.f);
 
     vec3 albedo = pow(texture(texture_diffuse1, fs_in.TexCoords).rgb, vec3(2.2));
 
+    // sample AO, Roughness, Metallic
     float ao        = 1.f;
     float roughness = 0.f;
     float metallic  = 0.f;
@@ -262,24 +267,23 @@ vec3 PBR_Lighting(vec3 N, vec3 V)
         roughness = ormTex.g;
         metallic  = ormTex.b;
     } else {
-        //ao        = texture(texture_ao1, fs_in.TexCoords).r;
-        //roughness = texture(texture_roughness1, fs_in.TexCoords).r;
-        //metallic  = texture(texture_metallic1, fs_in.TexCoords).r;
+        ao        = aoMap ? texture(texture_ao1, fs_in.TexCoords).r : ao;
+        roughness = roughnessMap ? texture(texture_roughness1, fs_in.TexCoords).r : roughness;
+        metallic  = metallicMap ? texture(texture_metallic1, fs_in.TexCoords).r : metallic;
     }
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    // mix(x,y,a) : x(1−a) + ya
     F0 = mix(F0, albedo, metallic);
 
     if (lightingModel == 0 || lightingModel == 1) {
-        ptSumLight += PointLighting(N, V, albedo, F0, ao, roughness, metallic);
+        ptSumLights += PointLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
     if (lightingModel == 0 || lightingModel == 2) {
-        dirSumLight += DirectionLighting(N, V, albedo, F0, ao, roughness, metallic);
+        dirSumLights += DirectionLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
-    return ptSumLight + dirSumLight;
+    return ptSumLights + dirSumLights;
 }
 
 void main()
