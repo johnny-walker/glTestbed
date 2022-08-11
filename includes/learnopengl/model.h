@@ -29,9 +29,12 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
+    bool processTangNormal;
 
     // constructor, expects a filepath to a 3D model.
-    Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
+    Model(string const &path, bool gamma = false) : 
+    gammaCorrection(gamma),
+    processTangNormal(false)
     {
         loadModel(path);
     }
@@ -49,7 +52,11 @@ private:
     {
         // read file via ASSIMP
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        unsigned int flag = processTangNormal ?
+                            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace :
+                            aiProcess_Triangulate | aiProcess_FlipUVs;
+
+        const aiScene* scene = importer.ReadFile(path, flag);
         // check for errors
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
@@ -116,16 +123,18 @@ private:
                 vec.x = mesh->mTextureCoords[0][i].x; 
                 vec.y = mesh->mTextureCoords[0][i].y;
                 vertex.TexCoords = vec;
-                // tangent
-                vector.x = mesh->mTangents[i].x;
-                vector.y = mesh->mTangents[i].y;
-                vector.z = mesh->mTangents[i].z;
-                vertex.Tangent = vector;
-                // bitangent
-                vector.x = mesh->mBitangents[i].x;
-                vector.y = mesh->mBitangents[i].y;
-                vector.z = mesh->mBitangents[i].z;
-                vertex.Bitangent = vector;
+                if (processTangNormal) {
+                    // tangent
+                    vector.x = mesh->mTangents[i].x;
+                    vector.y = mesh->mTangents[i].y;
+                    vector.z = mesh->mTangents[i].z;
+                    vertex.Tangent = vector;
+                    // bitangent
+                    vector.x = mesh->mBitangents[i].x;
+                    vector.y = mesh->mBitangents[i].y;
+                    vector.z = mesh->mBitangents[i].z;
+                    vertex.Bitangent = vector;
+                }
             }
             else
                 vertex.TexCoords = glm::vec2(0.0f, 0.0f);

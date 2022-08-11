@@ -64,7 +64,7 @@ vec3 getNormalFromMap()
 {
     if (!normalMap) {
         // return fragment normal
-        return fs_in.Normal;
+        return normalize(fs_in.Normal);
     }
 
     vec3 tangentNormal = vec3(texture(texture_normal1, fs_in.TexCoords)) * 2.0 - 1.0;
@@ -304,7 +304,7 @@ void main()
         return;
     }
 
-    vec3 N = normalize(getNormalFromMap());
+    vec3 N = getNormalFromMap();
     vec3 V = normalize(viewPos - fs_in.FragPos);
 
     FragColor = PBR_Lighting(N, V);
