@@ -1,0 +1,38 @@
+# Decompressed .mtl from binary object file
+
+newmtl Cateye
+map_Kd Cateye_Base_color.png
+map_orm orm.png
+map_Ev studio_black_cosmetics_centered_light_ibl_1024_ibl.hdr
+map_normal Cateye_Normal_OpenGL.png
+exposure 1.0
+vertical_orientation -23
+horizontal_orientation 115
+
+newmtl Diamond
+is_small_gem 1.0
+gem_absorption 10.0
+gem_color 255 255 255
+gem_dispersion 0.044
+gem_ior 2.403
+map_Ev gem_round_gem.hdr
+bloom_intensity 0.5
+
+newmtl Glass
+map_Kd glass_Color.png
+map_orm glass_orm.png
+map_Ev Tissot_Gentleman00_ibl.hdr
+map_normal glass_Normal.png
+map_Tf glass_trans.png
+exposure 1
+is_glass 1.0
+vertical_orientation 0
+horizontal_orientation 110
+
+newmtl shadow
+Ka 1 1 1
+Kd 1 1 1
+map_Kd shadow_Color.png
+Ks 1 1 1
+Ns 59
+illum 7

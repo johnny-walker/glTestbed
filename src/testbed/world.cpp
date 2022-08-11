@@ -44,6 +44,8 @@ bool World::init()
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // init shaders
     if (pbrRendering)
@@ -62,28 +64,28 @@ bool World::init()
     pShaderWorld->setInt("lightId", (int)-1);
     pShaderWorld->setBool("ormMap", false);
 
-    // specify the texture maps
-    //pShaderShadow->setInt("texture_diffuse1", 0);
-    //pShaderShadow->setInt("shadowMap", 1);
-
     // init camera
-    pCamera = new Camera(glm::vec3(0.f, 1.0f, 10.f));
+    pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
 
     // create floor
     pFloor = new Floor(scrWidth, scrHeight);
     pFloor->init(pShaderWorld, pCamera);
     
+    lightModel = 0;
 
     initPBR();
     //initModels();
 
-    initLights();
+    initDirLights(1);
+    initPtLights(1);
     return true;
 }
 
 bool World::initPBR()
 {
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
+    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_cat/cat_eyeware.obj");
+    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_lace/lace_eyeware.obj");
     pFirst->init(pShaderWorld, pCamera);
     pFirst->setAngle(glm::radians(45.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
@@ -93,7 +95,7 @@ bool World::initPBR()
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-6.5f, 0.f, -5.5f);
+    pCube->setPos(-7.5f, 0.f, -5.5f);
     pCube->setScale(0.5f);
 
     return true;
@@ -124,41 +126,22 @@ bool World::initModels()
 }
 
 // at most 2 for point lights and direction lights
-bool World::initLights(int count)
+bool World::initDirLights(int count)
 {
-    // init point lights 
-    lightModel = 0;
-    pShaderWorld->use();
-
-    PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
-    pPtLight->init(pShaderWorld, pCamera);
-    pPtLight->setPos(-1.f, 1.2f, 1.5f);
-    pPtLight->setPrimaryColor(2);   //orange      
-    pPtLight->setStrength(1.f);
-    ptLights.push_back(pPtLight);
-
-    if (count > 1) {
-        pPtLight = new PointLight(1, scrWidth, scrHeight);
-        pPtLight->init(pShaderWorld, pCamera);
-        pPtLight->setPos(-1.5f, 1.5f, -5.5f);
-        pPtLight->setPrimaryColor(4);   //green      
-        pPtLight->setStrength(0.5f);
-        ptLights.push_back(pPtLight);
-    }
-    pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
-
     // init direction lights
-    DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
 
-    pDirLight->init(pShaderWorld, pCamera);
-    pDirLight->setPos(3.f, 2.f, 1.5f);
-    pDirLight->setPrimaryColor(0);  //white
-    pDirLight->setStrength(1.f);
-    dirLights.push_back(pDirLight);
-    if (count > 1) {
-        pDirLight = new DirLight(1, scrWidth, scrHeight);
+    if (count > 0) {
+        DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
         pDirLight->init(pShaderWorld, pCamera);
-        pDirLight->setPos(2.f, 2.f, -3.f);
+        pDirLight->setPos(3.f, 2.f, 1.5f);
+        pDirLight->setPrimaryColor(0);  //white
+        pDirLight->setStrength(1.f);
+        dirLights.push_back(pDirLight);
+    }
+    if (count > 1) {
+        DirLight* pDirLight = new DirLight(1, scrWidth, scrHeight);
+        pDirLight->init(pShaderWorld, pCamera);
+        pDirLight->setPos(2.f, 2.f, -1.5f);
         pDirLight->setPrimaryColor(0);  //white
         pDirLight->setStrength(1.f);
         dirLights.push_back(pDirLight);
@@ -168,14 +151,38 @@ bool World::initLights(int count)
     return true;
 }
 
+bool World::initPtLights(int count)
+{
+    // init point lights 
+    pShaderWorld->use();
+
+    if (count > 0) {
+        PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
+        pPtLight->init(pShaderWorld, pCamera);
+        pPtLight->setPos(-1.f, 1.2f, 1.5f);
+        pPtLight->setPrimaryColor(2);   //orange      
+        pPtLight->setStrength(1.f);
+        ptLights.push_back(pPtLight);
+    }
+    if (count > 1) {
+        PointLight* pPtLight = new PointLight(1, scrWidth, scrHeight);
+        pPtLight->init(pShaderWorld, pCamera);
+        pPtLight->setPos(-1.5f, 1.5f, -6.5f);
+        pPtLight->setPrimaryColor(4);   //green      
+        pPtLight->setStrength(0.5f);
+        ptLights.push_back(pPtLight);
+    }
+    pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
+
+    return true;
+}
+
+
 void World::render() 
 {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     createPtCubemapTexture();
 
     while (!glfwWindowShouldClose(glWindow)) {
@@ -448,20 +455,20 @@ void World::processInput(float deltaTime)
         // todo
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F5) == GLFW_PRESS) {
-        if (ptLights.size() > 0)
-            pCtrlTarget = pCtrlLight = ptLights[0];
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
-        if (ptLights.size() > 1)
-            pCtrlTarget = pCtrlLight = ptLights[1];
-    }
-    else if (glfwGetKey(glWindow, GLFW_KEY_F7) == GLFW_PRESS) {
         if (dirLights.size() > 0)
             pCtrlTarget = pCtrlLight = dirLights[0];
     }
-    else if (glfwGetKey(glWindow, GLFW_KEY_F8) == GLFW_PRESS) {
+    else if (glfwGetKey(glWindow, GLFW_KEY_F6) == GLFW_PRESS) {
         if (dirLights.size() > 1)
             pCtrlTarget = pCtrlLight = dirLights[1];
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F7) == GLFW_PRESS) {
+        if (ptLights.size() > 0)
+            pCtrlTarget = pCtrlLight = ptLights[0];
+    }
+    else if (glfwGetKey(glWindow, GLFW_KEY_F8) == GLFW_PRESS) {
+        if (ptLights.size() > 1)
+            pCtrlTarget = pCtrlLight = ptLights[1];
     }
 
     // switch lighting algorithms
@@ -470,11 +477,11 @@ void World::processInput(float deltaTime)
         lightModel = 0;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F10) == GLFW_PRESS) {
-        // turn on point lights only
+        // turn on direction lights only
         lightModel = 1;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F11) == GLFW_PRESS) {
-        // turn on direction lights only
+        // turn on point lights only
         lightModel = 2;
     }
 

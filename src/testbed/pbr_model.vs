@@ -7,11 +7,10 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-
 out VS_OUT {
-    out vec3 FragPos; 
-    out vec3 Normal;
-    out vec2 TexCoords;
+    vec3 FragPos; 
+    vec3 Normal;
+    vec2 TexCoords;
 } vs_out;
 
 void main()

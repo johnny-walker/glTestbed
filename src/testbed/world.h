@@ -56,7 +56,8 @@ public:
 private:
 	bool initModels();
 	bool initPBR();
-	bool initLights(int count=1);
+	bool initDirLights(int count=1);
+	bool initPtLights(int count = 1);
 	void setShader(Shader* pShaderObj);
 	void renderScene(bool drawSphere = true);
 	void processInput(float deltaTime = 0.f);

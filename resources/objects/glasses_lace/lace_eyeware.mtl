@@ -1,0 +1,56 @@
+# Decompressed .mtl from binary object file
+
+newmtl Glass
+map_Kd glass_Color.png
+map_orm glass_orm.png
+map_Ev Gentleman00_ibl_ibl_1024_ibl.hdr
+map_normal glass_Normal.png
+map_Tf glass_trans.png
+exposure 1.7
+is_glass 1.0
+vertical_orientation 0
+horizontal_orientation 110
+
+newmtl metal
+map_Kd metal_Base_color.png
+map_orm orm.png
+map_Ev hotel_room000_4k_ibl_1024_ibl.hdr
+map_normal metal_Normal_OpenGL.png
+exposure 1
+vertical_orientation 0
+horizontal_orientation 65
+
+newmtl noserider
+Ka 1 1 1
+Kd 1 1 1
+map_Kd glass_Color.png
+illum 7
+map_Ev ev_map_g.png
+env_mode Normal
+env_intensity 0.1
+env_tile 1 1
+
+newmtl pearl
+map_Kd metal_Base_color.png
+map_orm orm.png
+map_Ev env_map_ibl_512_ibl.hdr
+map_normal metal_Normal_OpenGL.png
+exposure 1
+
+newmtl plastic
+map_Kd metal_Base_color.png
+map_orm orm.png
+map_Ev hotel_room000_4k_ibl_1024_ibl.hdr
+map_normal metal_Normal_OpenGL.png
+exposure 1
+vertical_orientation -75
+horizontal_orientation 0
+fresnel_intensity 0.3
+
+newmtl shadow
+Ka 1 1 1
+Kd 1 1 1
+map_Kd glass_Color.png
+Ks 1 1 1
+Ns 59
+illum 7

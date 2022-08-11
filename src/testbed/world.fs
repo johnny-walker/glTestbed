@@ -224,12 +224,12 @@ void main()
     if (lightingModel == 0) {
         result = BlinnPhong_Lighting(norm, viewDir);
     } else if (lightingModel == 1) {
-        for (int i=0; i<ptLights.count; i++) {
-            result += PointLighting(norm, viewDir, i);
-        }
-    } else if (lightingModel == 2) {
         for (int i=0; i<dirLights.count; i++) {
             result += DirectionLighting(norm, viewDir, i);
+        }
+    } else if (lightingModel == 2) {
+        for (int i=0; i<ptLights.count; i++) {
+            result += PointLighting(norm, viewDir, i);
         }
     }
     FragColor = vec4(result, 1.0);
