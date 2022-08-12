@@ -48,64 +48,76 @@ bool World::init()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // init shaders
-    pShaderWorld = new Shader("pbr_model.vs", "pbr_model.fs");
+    pShaderPBR = new Shader("pbr_model.vs", "pbr_model.fs");
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
     pShaderCubemap = new Shader("cubemap_depth.vs", "cubemap_depth.fs", "cubemap_depth.gs");
+    // IBL spacular
+    pShaderEnvCubemap = new Shader("env_cubemap.vs", "equi_to_cubemap.fs");
+    pShaderIrrConv = new Shader("env_cubemap.vs", "irr_convolution.fs");
+    pShaderPrefltr = new Shader("env_cubemap.vs", "prefilter.fs");
+    pShaderBRDF = new Shader("brdf.vs", "brdf.fs");
+    pShaderBG = new Shader("background.vs", "background.fs");
 
     if (!pShaderShadow)
         return false;
 
-    pShaderWorld->use();
-    pShaderWorld->setInt("lightId", (int)-1);
-    pShaderWorld->setBool("ormMap", false);
+    //pBackground->use();
+    //pBackground->setInt("environmentMap", 0);
+
+    lightModel = 0;
+
+    pShaderPBR->use();
+    pShaderPBR->setInt("lightId", (int)-1);
+    pShaderPBR->setBool("ormMap", false);
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
-
+   
     // create floor
     pFloor = new Floor(scrWidth, scrHeight);
-    pFloor->init(pShaderWorld, pCamera);
-    
-    lightModel = 0;
+    pFloor->init(pShaderPBR, pCamera);
 
-    initPBR();
-    //initModels();
+    pCube = new Cube(scrWidth, scrHeight);
+    pCube->init(pShaderPBR, pCamera);
+    pCube->setAngle(glm::radians(60.f), 1);
+    pCube->setPos(-7.5f, 0.f, -5.5f);
+    pCube->setScale(0.5f);
 
     initDirLights(1);
     initPtLights(1);
+ 
+    initPBRModel();
+
     return true;
 }
 
-bool World::initPBR()
+bool World::initPBRModel()
 {
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
     //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_cat/cat_eyeware.obj");
     //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_lace/lace_eyeware.obj");
-    pFirst->init(pShaderWorld, pCamera);
+    pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(45.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
 
-    pCube = new Cube(scrWidth, scrHeight);
-    pCube->init(pShaderWorld, pCamera);
-    pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-7.5f, 0.f, -5.5f);
-    pCube->setScale(0.5f);
+    createIBLSpecular("../../resources/hdr/brown.hdr");
+    pShaderPBR->use();
 
     return true;
 }
 
-bool World::initModels()
+bool World::initModel()
 {
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
-    pFirst->init(pShaderWorld, pCamera);
+    pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(210.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pFirst;
 
     pCube = new Cube(scrWidth, scrHeight);
-    pCube->init(pShaderWorld, pCamera);
+    pCube->init(pShaderPBR, pCamera);
     pCube->setAngle(glm::radians(60.f), 1);
     pCube->setPos(-6.5f, 0.f, -5.5f);
     pCube->setScale(0.5f);
@@ -120,7 +132,7 @@ bool World::initDirLights(int count)
 
     if (count > 0) {
         DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
-        pDirLight->init(pShaderWorld, pCamera);
+        pDirLight->init(pShaderPBR, pCamera);
         pDirLight->setPos(3.f, 2.f, 1.5f);
         pDirLight->setPrimaryColor(0);  //white
         pDirLight->setStrength(1.f);
@@ -128,13 +140,13 @@ bool World::initDirLights(int count)
     }
     if (count > 1) {
         DirLight* pDirLight = new DirLight(1, scrWidth, scrHeight);
-        pDirLight->init(pShaderWorld, pCamera);
+        pDirLight->init(pShaderPBR, pCamera);
         pDirLight->setPos(2.f, 2.f, -1.5f);
         pDirLight->setPrimaryColor(0);  //white
         pDirLight->setStrength(1.f);
         dirLights.push_back(pDirLight);
     }
-    pShaderWorld->setInt("dirLights.count", (int)dirLights.size());
+    pShaderPBR->setInt("dirLights.count", (int)dirLights.size());
 
     return true;
 }
@@ -142,11 +154,11 @@ bool World::initDirLights(int count)
 bool World::initPtLights(int count)
 {
     // init point lights 
-    pShaderWorld->use();
+    pShaderPBR->use();
 
     if (count > 0) {
         PointLight* pPtLight = new PointLight(0, scrWidth, scrHeight);
-        pPtLight->init(pShaderWorld, pCamera);
+        pPtLight->init(pShaderPBR, pCamera);
         pPtLight->setPos(-1.f, 1.2f, 1.5f);
         pPtLight->setPrimaryColor(2);   //orange      
         pPtLight->setStrength(1.f);
@@ -154,17 +166,215 @@ bool World::initPtLights(int count)
     }
     if (count > 1) {
         PointLight* pPtLight = new PointLight(1, scrWidth, scrHeight);
-        pPtLight->init(pShaderWorld, pCamera);
+        pPtLight->init(pShaderPBR, pCamera);
         pPtLight->setPos(-1.5f, 1.5f, -6.5f);
         pPtLight->setPrimaryColor(4);   //green      
         pPtLight->setStrength(0.5f);
         ptLights.push_back(pPtLight);
     }
-    pShaderWorld->setInt("ptLights.count", (int)ptLights.size());
+    pShaderPBR->setInt("ptLights.count", (int)ptLights.size());
 
     return true;
 }
 
+
+void World::createIBLSpecular(char const* filename)
+{
+    // load the HDR environment map
+    stbi_set_flip_vertically_on_load(true);
+    int width = 0, height = 0, nComponents = 0;
+    float* data = stbi_loadf(filename, &width, &height, &nComponents, 0);
+
+
+    unsigned int hdrTexture;
+    if (data) {
+        glGenTextures(1, &hdrTexture);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    } else {
+        std::cout << "Failed to load HDR image." << std::endl;
+        return;
+    }
+
+    // setup framebuffer
+    glGenFramebuffers(1, &captureFBO);
+    glGenRenderbuffers(1, &captureRBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
+
+
+    // setup cubemap to render to and attach to framebuffer
+    unsigned int envCubemap;
+    glGenTextures(1, &envCubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+    for (unsigned int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // enable pre-filter mipmap sampling (combatting visible dots artifact)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // set up projection and view matrices for capturing data onto the 6 cubemap face directions
+    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    glm::mat4 captureViews[] =
+    {
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+    };
+
+    // convert HDR equirectangular environment map to cubemap 
+    pShaderEnvCubemap->use();
+    pShaderEnvCubemap->setInt("equirectangularMap", 0);
+    pShaderEnvCubemap->setMat4("projection", captureProjection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, hdrTexture);
+
+    glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    for (unsigned int i = 0; i < 6; ++i) {
+        pShaderEnvCubemap->setMat4("view", captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        setShader(pShaderEnvCubemap);
+        renderScene(false);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // then let OpenGL generate mipmaps from first mip face (combatting visible dots artifact)
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    // create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
+    unsigned int irradianceMap;
+    glGenTextures(1, &irradianceMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+
+    // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
+    // -----------------------------------------------------------------------------
+    pShaderIrrConv->use();
+    pShaderIrrConv->setInt("environmentMap", 0);
+    pShaderIrrConv->setMat4("projection", captureProjection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+    glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        pShaderIrrConv->setMat4("view", captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        setShader(pShaderIrrConv);
+        renderScene(false);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
+    unsigned int prefilterMap;
+    glGenTextures(1, &prefilterMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // be sure to set minification filter to mip_linear 
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
+    // ----------------------------------------------------------------------------------------------------
+    pShaderPrefltr->use();
+    pShaderPrefltr->setInt("environmentMap", 0);
+    pShaderPrefltr->setMat4("projection", captureProjection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    unsigned int maxMipLevels = 5;
+    for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+    {
+        // reisze framebuffer according to mip-level size.
+        unsigned int mipWidth = static_cast<unsigned int>(128 * std::pow(0.5, mip));
+        unsigned int mipHeight = static_cast<unsigned int>(128 * std::pow(0.5, mip));
+        glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        float roughness = (float)mip / (float)(maxMipLevels - 1);
+        pShaderPrefltr->setFloat("roughness", roughness);
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            pShaderPrefltr->setMat4("view", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            setShader(pShaderPrefltr);
+            renderScene(false);
+        }
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // generate a 2D LUT from the BRDF equations used.
+    unsigned int brdfLUTTexture;
+    glGenTextures(1, &brdfLUTTexture);
+
+    // pre-allocate enough memory for the LUT texture.
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+    // be sure to set wrapping mode to GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // then re-configure capture framebuffer object and render screen-space quad with BRDF shader.
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+
+    glViewport(0, 0, 512, 512);
+    pShaderBRDF->use();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderQuad();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
 void World::render() 
 {
@@ -181,9 +391,9 @@ void World::render()
 
         processInput(deltaTime);
 
-        setShader(pShaderWorld);
-        pShaderWorld->setInt("lightingModel", lightModel);
-        pShaderWorld->setVec3("viewPos", pCamera->Position);
+        setShader(pShaderPBR);
+        pShaderPBR->setInt("lightingModel", lightModel);
+        pShaderPBR->setVec3("viewPos", pCamera->Position);
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -195,19 +405,53 @@ void World::render()
         generatePtCubemap(ptNearPlane, ptFarPlane);
 
         // render scene
-        setShader(pShaderWorld);
+        setShader(pShaderPBR);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         configDirLightShadowMap();
         configPtLightShadowMap(ptFarPlane);
-        renderScene();
+        renderScene(true);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }
     glDisable(GL_BLEND);
+}
+
+void World::generateDirShadowMap(float nearPlane, float farPlane)
+{
+    glm::mat4 lightMtrx = glm::mat4(0.f);
+    unsigned int depthMapFBO = 0;
+    setShader(pShaderShadow);
+    for (int i = 0; i < dirLights.size(); i++) {
+        //orthographic projection
+        lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane, true);
+        pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
+
+        depthMapFBO = dirLights[i]->getShadowMapFBO();
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        renderScene(false);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+}
+
+void World::configDirLightShadowMap()
+{
+    pShaderPBR->use();
+    for (int i = 0; i < dirLights.size(); i++) {
+        glm::mat4 lightMtrx = dirLights[i]->getMatrix();
+        pShaderPBR->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
+        pShaderPBR->setVec3("dirLights.direction[" + std::to_string(i) + "]", dirLights[i]->getPos());
+        pShaderPBR->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor() * dirLights[i]->getStrength());
+
+        unsigned int depthMap = dirLights[i]->getShadowMap();
+        pShaderPBR->setInt("dirLights.shadowMap" + std::to_string(i), 6 + i);
+        glActiveTexture(GL_TEXTURE6 + i);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+    }
 }
 
 void World::createPtCubemapTexture()
@@ -262,51 +506,16 @@ void World::generatePtCubemap(float nearPlane, float farPlane)
 void World::configPtLightShadowMap(float farPlane)
 {
     // config cubemap
-    pShaderWorld->setFloat("ptLights.farPlane", farPlane);
+    pShaderPBR->setFloat("ptLights.farPlane", farPlane);
     for (int i = 0; i < ptLights.size(); i++) {
-        pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
-        pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
+        pShaderPBR->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
+        pShaderPBR->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
 
-        pShaderWorld->setInt("ptLights.cubeMap" + std::to_string(i), 5 + i);
-        glActiveTexture(GL_TEXTURE5 + i);
+        pShaderPBR->setInt("ptLights.cubeMap" + std::to_string(i), 8 + i);
+        glActiveTexture(GL_TEXTURE8 + i);
         glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap[i]);
     }
 }
-
-void World::generateDirShadowMap(float nearPlane, float farPlane)
-{
-    glm::mat4 lightMtrx = glm::mat4(0.f);
-    unsigned int depthMapFBO = 0;
-    setShader(pShaderShadow);
-    for (int i = 0; i < dirLights.size(); i++) {
-        //orthographic projection
-        lightMtrx = dirLights[i]->createMatrix(nearPlane, farPlane, true);
-        pShaderShadow->setMat4("lightSpaceMatrix", lightMtrx);
-
-        depthMapFBO = dirLights[i]->getShadowMapFBO();
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        renderScene(false);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-}
-
-void World::configDirLightShadowMap()
-{
-    pShaderWorld->use();
-    for (int i = 0; i < dirLights.size(); i++) {
-        glm::mat4 lightMtrx = dirLights[i]->getMatrix();
-        pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
-        pShaderWorld->setVec3("dirLights.direction[" + std::to_string(i) + "]", dirLights[i]->getPos());
-        pShaderWorld->setVec3("dirLights.color[" + std::to_string(i) + "]", dirLights[i]->getColor()*dirLights[i]->getStrength());
-
-        unsigned int depthMap = dirLights[i]->getShadowMap();
-        pShaderWorld->setInt("dirLights.shadowMap" + std::to_string(i), 3 + i);
-        glActiveTexture(GL_TEXTURE3 + i);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-    }
-}
-
 
 void World::setShader(Shader* pShaderObj)
 {

@@ -9,6 +9,8 @@ in VS_OUT {
 
 uniform vec3 viewPos;
 
+// GL_TEXTURE0 + i
+// model texture maps
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
@@ -17,6 +19,7 @@ uniform sampler2D texture_roughness1;
 uniform sampler2D texture_metallic1;
 uniform sampler2D texture_orm1;
 
+// flags if using texutre mpas
 uniform bool specularMap;
 uniform bool normalMap;
 uniform bool aoMap;
@@ -24,6 +27,7 @@ uniform bool roughnessMap;
 uniform bool metallicMap;
 uniform bool ormMap;
 
+// GL_TEXTURE6 + i
 struct DirectLights {
     int  count;
     mat4 matrics[2];
@@ -35,6 +39,7 @@ struct DirectLights {
 };  
 uniform DirectLights dirLights;
 
+// GL_TEXTURE8 + i
 struct PointLights {
     int  count;
     mat4 matrics[2];
@@ -48,6 +53,13 @@ struct PointLights {
     samplerCube cubeMap1;
 };  
 uniform PointLights ptLights;
+
+// GL_TEXTURE10 + i
+// IBL maps
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
+
 
 // render control flags
 uniform int lightId;        // draw specified point light color

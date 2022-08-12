@@ -17,9 +17,14 @@ class World
 
 	GLFWwindow* glWindow = nullptr;
 
-	Shader* pShaderWorld = nullptr;
-	Shader* pShaderShadow = nullptr;
-	Shader* pShaderCubemap = nullptr;
+	Shader* pShaderPBR			= nullptr;
+	Shader* pShaderShadow		= nullptr;
+	Shader* pShaderCubemap		= nullptr;
+	Shader* pShaderEnvCubemap	= nullptr;
+	Shader* pShaderIrrConv		= nullptr;
+	Shader* pShaderPrefltr		= nullptr;
+	Shader* pShaderBRDF 		= nullptr;
+	Shader* pShaderBG			= nullptr;
 
 	Camera* pCamera = nullptr;
 
@@ -50,21 +55,25 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
-	bool initModels();
-	bool initPBR();
+	bool initModel();
+	bool initPBRModel();
 	bool initDirLights(int count=1);
 	bool initPtLights(int count = 1);
 	void setShader(Shader* pShaderObj);
-	void renderScene(bool drawSphere = true);
+	void renderScene(bool drawSphere = false);
 	void processInput(float deltaTime = 0.f);
 
 private:
 	// direction light shadow map
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
+	unsigned int captureFBO = 0;
+	unsigned int captureRBO = 0;
 
 	//bool showDepthMap = false;
 	//bool debugDepthMap = false;
+	
+	void createIBLSpecular(char const* filename);
 
 	void createPtCubemapTexture();
 	void generatePtCubemap(float nearPlane, float farPlane);
