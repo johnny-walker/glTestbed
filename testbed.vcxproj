@@ -399,8 +399,16 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="src\testbed\world.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\testbed\background.fs" />
+    <None Include="src\testbed\background.vs" />
+    <None Include="src\testbed\brdf.fs" />
+    <None Include="src\testbed\brdf.vs" />
+    <None Include="src\testbed\env_cubemap.vs" />
+    <None Include="src\testbed\equi_to_cubemap.fs" />
+    <None Include="src\testbed\irr_convolution.fs" />
     <None Include="src\testbed\pbr_model.fs" />
     <None Include="src\testbed\pbr_model.vs" />
+    <None Include="src\testbed\prefilter.fs" />
     <None Include="src\testbed\quad.fs" />
     <None Include="src\testbed\quad.vs" />
     <None Include="src\testbed\cubemap_depth.fs" />
@@ -408,8 +416,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <None Include="src\testbed\cubemap_depth.vs" />
     <None Include="src\testbed\shadow_mapping.fs" />
     <None Include="src\testbed\shadow_mapping.vs" />
-    <None Include="src\testbed\world.fs" />
-    <None Include="src\testbed\world.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\testbed\cube.h" />

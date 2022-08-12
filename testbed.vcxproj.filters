@@ -30,12 +30,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\testbed\world.fs">
-      <Filter>Src\Shaders</Filter>
-    </None>
-    <None Include="src\testbed\world.vs">
-      <Filter>Src\Shaders</Filter>
-    </None>
     <None Include="src\testbed\quad.fs">
       <Filter>Src\Shaders</Filter>
     </None>
@@ -61,6 +55,30 @@
       <Filter>Src\Shaders</Filter>
     </None>
     <None Include="src\testbed\pbr_model.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\background.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\background.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\brdf.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\brdf.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\env_cubemap.vs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\equi_to_cubemap.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\irr_convolution.fs">
+      <Filter>Src\Shaders</Filter>
+    </None>
+    <None Include="src\testbed\prefilter.fs">
       <Filter>Src\Shaders</Filter>
     </None>
   </ItemGroup>

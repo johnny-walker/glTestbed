@@ -19,12 +19,9 @@ class World
 
 	Shader* pShaderWorld = nullptr;
 	Shader* pShaderShadow = nullptr;
-	Shader* pShaderQuad = nullptr;
 	Shader* pShaderCubemap = nullptr;
 
 	Camera* pCamera = nullptr;
-
-	bool pbrRendering = true;
 
 	//lights
 	std::vector<PointLight*> ptLights; 
@@ -34,7 +31,6 @@ class World
 	Floor* pFloor = nullptr;
 	Cube* pCube = nullptr;
 	BaseModel* pFirst = nullptr;
-	BaseModel* pRobot = nullptr;
 
 	//control targets
 	int lightModel = 0;
@@ -67,8 +63,8 @@ private:
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
 
-	bool showDepthMap = false;
-	bool debugDepthMap = false;
+	//bool showDepthMap = false;
+	//bool debugDepthMap = false;
 
 	void createPtCubemapTexture();
 	void generatePtCubemap(float nearPlane, float farPlane);
@@ -77,7 +73,6 @@ private:
 	void generateDirShadowMap(float nearPlane, float farPlane);
 	void configDirLightShadowMap();
 
-	void renderShadowMap();
 	void renderQuad();
 
 private:

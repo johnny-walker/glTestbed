@@ -29,12 +29,12 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
-    bool processTangNormal;
+    bool calcTangNormal;
 
     // constructor, expects a filepath to a 3D model.
     Model(string const &path, bool gamma = false) : 
     gammaCorrection(gamma),
-    processTangNormal(false)
+    calcTangNormal(false)
     {
         loadModel(path);
     }
@@ -52,9 +52,9 @@ private:
     {
         // read file via ASSIMP
         Assimp::Importer importer;
-        unsigned int flag = processTangNormal ?
+        unsigned int flag = calcTangNormal ?
                             aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace :
-                            aiProcess_Triangulate | aiProcess_FlipUVs;
+                            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs;
 
         const aiScene* scene = importer.ReadFile(path, flag);
         // check for errors
@@ -123,7 +123,7 @@ private:
                 vec.x = mesh->mTextureCoords[0][i].x; 
                 vec.y = mesh->mTextureCoords[0][i].y;
                 vertex.TexCoords = vec;
-                if (processTangNormal) {
+                if (calcTangNormal) {
                     // tangent
                     vector.x = mesh->mTangents[i].x;
                     vector.y = mesh->mTangents[i].y;
@@ -135,10 +135,9 @@ private:
                     vector.z = mesh->mBitangents[i].z;
                     vertex.Bitangent = vector;
                 }
-            }
-            else
+            } else {
                 vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-
+            }
             vertices.push_back(vertex);
         }
         // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.

@@ -16,9 +16,9 @@ World::~World()
     ptLights.clear();
     dirLights.clear();
     if (pFloor) delete pFloor;
-    if (pCube)  delete pCube;
     if (pFirst) delete pFirst;
-    if (pRobot) delete pRobot;
+    if (pCube)  delete pCube;
+
 }
 
 bool World::init() 
@@ -48,13 +48,8 @@ bool World::init()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // init shaders
-    if (pbrRendering)
-        pShaderWorld = new Shader("pbr_model.vs", "pbr_model.fs");
-    else
-        pShaderWorld = new Shader("world.vs", "world.fs");
-
+    pShaderWorld = new Shader("pbr_model.vs", "pbr_model.fs");
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
-    pShaderQuad = new Shader("quad.vs", "quad.fs");
     pShaderCubemap = new Shader("cubemap_depth.vs", "cubemap_depth.fs", "cubemap_depth.gs");
 
     if (!pShaderShadow)
@@ -108,13 +103,6 @@ bool World::initModels()
     pFirst->setAngle(glm::radians(210.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pFirst;
-
-    /*
-    pRobot = new BaseModel(scrWidth, scrHeight, "../../resources/objects/cyborg/cyborg.obj");
-    pRobot->init(pShaderWorld, pCamera);
-    pRobot->setAngle(glm::radians(-45.f));
-    pRobot->setPos(3.f, -0.5f, -1.f);
-    */
 
     pCube = new Cube(scrWidth, scrHeight);
     pCube->init(pShaderWorld, pCamera);
@@ -206,19 +194,14 @@ void World::render()
         generateDirShadowMap(dirNearPlane, dirFarPlane);
         generatePtCubemap(ptNearPlane, ptFarPlane);
 
-        if (showDepthMap) {
-            // debug (hotkey-z)
-            renderShadowMap();
-        } else {
-            // render scene
-            setShader(pShaderWorld);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // render scene
+        setShader(pShaderWorld);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            configDirLightShadowMap();
-            configPtLightShadowMap(ptFarPlane);
-            renderScene();
-        }
+        configDirLightShadowMap();
+        configPtLightShadowMap(ptFarPlane);
+        renderScene();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glfwSwapBuffers(glWindow);
@@ -280,7 +263,6 @@ void World::configPtLightShadowMap(float farPlane)
 {
     // config cubemap
     pShaderWorld->setFloat("ptLights.farPlane", farPlane);
-    pShaderWorld->setBool("ptLights.debug", debugDepthMap);
     for (int i = 0; i < ptLights.size(); i++) {
         pShaderWorld->setVec3("ptLights.position[" + std::to_string(i) + "]", ptLights[i]->getPos());
         pShaderWorld->setVec3("ptLights.color[" + std::to_string(i) + "]", ptLights[i]->getColor() * ptLights[i]->getStrength());
@@ -312,7 +294,6 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
 void World::configDirLightShadowMap()
 {
     pShaderWorld->use();
-    pShaderWorld->setBool("dirLights.debug", debugDepthMap);
     for (int i = 0; i < dirLights.size(); i++) {
         glm::mat4 lightMtrx = dirLights[i]->getMatrix();
         pShaderWorld->setMat4("dirLights.matrics[" + std::to_string(i) + "]", lightMtrx);
@@ -326,33 +307,6 @@ void World::configDirLightShadowMap()
     }
 }
 
-//show direction light shadow map
-void World::renderShadowMap()
-{
-    DirLight* pdirLight = nullptr;
-    for (int i = 0; i < dirLights.size(); i++) {
-        if (dirLights[i] == pCtrlLight) {
-            pdirLight = dirLights[i];
-            break;
-        }
-    }
-    if (pdirLight) {
-        // ortho {true: linear, false: nonlinear}
-        bool ortho = pdirLight->isOrthoProjection();
-        unsigned int depthMap = pdirLight->getShadowMap();
-        float nearPlane = pdirLight->getProjNearPlane();
-        float farPlane = pdirLight->getProjFarPlane();
-
-        pShaderQuad->use();
-        pShaderQuad->setBool("convert2Linear", !ortho); 
-        pShaderQuad->setFloat("nearPlane", nearPlane);
-        pShaderQuad->setFloat("farPlane", farPlane);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        renderQuad();
-    }
-}
 
 void World::setShader(Shader* pShaderObj)
 {
@@ -365,7 +319,6 @@ void World::setShader(Shader* pShaderObj)
     if (pFloor) pFloor->setShader(pShaderObj);
     if (pCube)  pCube->setShader(pShaderObj);
     if (pFirst) pFirst->setShader(pShaderObj);
-    if (pRobot) pRobot->setShader(pShaderObj);
 }
 
 void World::renderScene(bool drawSphere)
@@ -380,7 +333,6 @@ void World::renderScene(bool drawSphere)
     
     if (pFloor) pFloor->render();
     if (pFirst) pFirst->render();
-    if (pRobot) pRobot->render();
     if (pCube)  pCube->render();
 }
 
@@ -446,10 +398,10 @@ void World::processInput(float deltaTime)
         pCtrlTarget = pFirst;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F2) == GLFW_PRESS) {
-        pCtrlTarget = pRobot;
+        pCtrlTarget = pCube;
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F3) == GLFW_PRESS) {
-        pCtrlTarget = pCube;
+        // todo
     }
     else if (glfwGetKey(glWindow, GLFW_KEY_F4) == GLFW_PRESS) {
         // todo
@@ -485,8 +437,8 @@ void World::processInput(float deltaTime)
         lightModel = 2;
     }
 
-    showDepthMap  = (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) ? true : false;
-    debugDepthMap = (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) ? true : false;
+    //showDepthMap  = (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) ? true : false;
+    //debugDepthMap = (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) ? true : false;
 
     if (glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
         //todo
