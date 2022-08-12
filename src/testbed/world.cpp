@@ -16,8 +16,8 @@ World::~World()
     ptLights.clear();
     dirLights.clear();
     if (pFloor) delete pFloor;
-    if (pFirst) delete pFirst;
     if (pCube)  delete pCube;
+    if (pFirst) delete pFirst;
 
 }
 
@@ -61,8 +61,8 @@ bool World::init()
     if (!pShaderShadow)
         return false;
 
-    //pBackground->use();
-    //pBackground->setInt("environmentMap", 0);
+    pShaderBG->use();
+    pShaderBG->setInt("environmentMap", 0);
 
     lightModel = 0;
 
@@ -86,41 +86,7 @@ bool World::init()
     initDirLights(1);
     initPtLights(1);
  
-    initPBRModel();
-
-    return true;
-}
-
-bool World::initPBRModel()
-{
-    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
-    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_cat/cat_eyeware.obj");
-    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_lace/lace_eyeware.obj");
-    pFirst->init(pShaderPBR, pCamera);
-    pFirst->setAngle(glm::radians(45.f), 1);
-    pFirst->setPos(0.f, 0.25f, 0.f);
-    pFirst->setScale(0.2f);
-    pCtrlTarget = pFirst;
-
-    createIBLSpecular("../../resources/hdr/brown.hdr");
-    pShaderPBR->use();
-
-    return true;
-}
-
-bool World::initModel()
-{
-    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
-    pFirst->init(pShaderPBR, pCamera);
-    pFirst->setAngle(glm::radians(210.f), 1);
-    pFirst->setPos(0.f, 0.25f, 0.f);
-    pCtrlTarget = pFirst;
-
-    pCube = new Cube(scrWidth, scrHeight);
-    pCube->init(pShaderPBR, pCamera);
-    pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-6.5f, 0.f, -5.5f);
-    pCube->setScale(0.5f);
+    initModel();
 
     return true;
 }
@@ -177,6 +143,39 @@ bool World::initPtLights(int count)
     return true;
 }
 
+bool World::initPBRModel()
+{
+    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
+    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_cat/cat_eyeware.obj");
+    //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_lace/lace_eyeware.obj");
+    pFirst->init(pShaderPBR, pCamera);
+    pFirst->setAngle(glm::radians(45.f), 1);
+    pFirst->setPos(0.f, 0.25f, 0.f);
+    pFirst->setScale(0.2f);
+    pCtrlTarget = pFirst;
+
+    createIBLSpecular("../../resources/hdr/brown.hdr");
+    pShaderPBR->use();
+
+    return true;
+}
+
+bool World::initModel()
+{
+    pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    pFirst->init(pShaderPBR, pCamera);
+    pFirst->setAngle(glm::radians(210.f), 1);
+    pFirst->setPos(0.f, 0.25f, 0.f);
+    pCtrlTarget = pFirst;
+
+    pCube = new Cube(scrWidth, scrHeight);
+    pCube->init(pShaderPBR, pCamera);
+    pCube->setAngle(glm::radians(60.f), 1);
+    pCube->setPos(-6.5f, 0.f, -5.5f);
+    pCube->setScale(0.5f);
+
+    return true;
+}
 
 void World::createIBLSpecular(char const* filename)
 {
@@ -534,15 +533,15 @@ void World::renderScene(bool drawSphere)
 {
     // render point lights sphere 
     if (drawSphere) {
-        if (lightModel == 0 || lightModel == 1) {
+        if (lightModel == 0 || lightModel == 2) {
             for (int i = 0; i < ptLights.size(); i++)
                 ptLights[i]->render();
         }
     }
     
     if (pFloor) pFloor->render();
-    if (pFirst) pFirst->render();
     if (pCube)  pCube->render();
+    if (pFirst) pFirst->render();
 }
 
 void World::terminate() 
