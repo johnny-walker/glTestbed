@@ -65,15 +65,16 @@ private:
 	void processInput(float deltaTime = 0.f);
 
 private:
-	unsigned int quadVAO = 0;
-	unsigned int quadVBO = 0;
-
 	unsigned int captureFBO = 0;
 	unsigned int captureRBO = 0;
-	unsigned int envCubemap = 0;
-	unsigned int irradianceMap = 0;
-	unsigned int prefilterMap = 0;
+	unsigned int hdrTexture = 0;		// IBL texture
+	unsigned int envCubemap = 0;		// IBL cube
+	unsigned int irradianceMap = 0;		// IBL cube
+	unsigned int prefilterMap = 0;		// IBL cube
+	unsigned int brdfLUTTextureMap = 0;	// IBL LUT
 
+	unsigned int quadVAO = 0;
+	unsigned int quadVBO = 0;
 	unsigned int cubeVAO = 0;
 	unsigned int cubeVBO = 0;
 
@@ -81,7 +82,7 @@ private:
 	//bool showDepthMap = false;
 	//bool debugDepthMap = false;
 	
-	void createIBLSpecular(char const* filename);
+	void initIBLSpecular(char const* filename);
 
 	void createPtCubemapTexture();
 	void generatePtCubemap(float nearPlane, float farPlane);

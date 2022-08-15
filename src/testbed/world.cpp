@@ -33,9 +33,9 @@ bool World::init()
     glfwSetFramebufferSizeCallback(glWindow, framebuffer_size_callback);
 
     // mouse callbacks
-    //glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //glfwSetCursorPosCallback(glWindow, mouse_callback);
-    //glfwSetScrollCallback(glWindow, scroll_callback);
+    glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(glWindow, mouse_callback);
+    glfwSetScrollCallback(glWindow, scroll_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -43,6 +43,11 @@ bool World::init()
     }
 
     glEnable(GL_DEPTH_TEST);
+    // set depth function to less than AND equal for skybox depth trick.
+    glDepthFunc(GL_LEQUAL);
+    // enable seamless cubemap sampling for lower mip levels in the pre-filter map.
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -58,19 +63,19 @@ bool World::init()
     pShaderBRDF = new Shader("brdf.vs", "brdf.fs");
     pShaderBG = new Shader("background.vs", "background.fs");
 
-    if (!pShaderShadow)
+    if (!pShaderPBR)
         return false;
 
-    pShaderBG->use();
-    pShaderBG->setInt("environmentMap", 0);
-
     pShaderPBR->use();
+    // init camera
+    pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
 
-    initWorld(true, false);
     initDirLights(1);
-    initPtLights(1);
- 
-    return initPBRModel();
+    initPtLights(0);
+
+    initPBRModel();
+    //initModel();
+    return true;
 }
 
 void World::initWorld(bool bFloor, bool bCube)
@@ -78,9 +83,6 @@ void World::initWorld(bool bFloor, bool bCube)
     lightModel = 0;
     pShaderPBR->setInt("lightId", (int)-1);
     pShaderPBR->setBool("ormMap", false);
-
-    // init camera
-    pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
 
     // create floor
     if (bFloor) {
@@ -100,7 +102,7 @@ void World::initWorld(bool bFloor, bool bCube)
 // at most 2 for point lights and direction lights
 void World::initDirLights(int count)
 {
-    // init direction lights
+    pShaderPBR->use();
 
     if (count > 0) {
         DirLight* pDirLight = new DirLight(0, scrWidth, scrHeight);
@@ -123,7 +125,6 @@ void World::initDirLights(int count)
 
 void World::initPtLights(int count)
 {
-    // init point lights 
     pShaderPBR->use();
 
     if (count > 0) {
@@ -143,6 +144,8 @@ void World::initPtLights(int count)
         ptLights.push_back(pPtLight);
     }
     pShaderPBR->setInt("ptLights.count", (int)ptLights.size());
+
+    createPtCubemapTexture();
 }
 
 bool World::initPBRModel()
@@ -156,11 +159,11 @@ bool World::initPBRModel()
 
     pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(45.f), 1);
-    pFirst->setPos(0.f, 0.25f, 0.f);
+    pFirst->setPos(0.f, 0.5f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
 
-    createIBLSpecular("../../resources/hdr/brown.hdr");
+    initIBLSpecular("../../resources/hdr/newport_loft.hdr");
     pShaderPBR->use();
 
     return true;
@@ -168,6 +171,8 @@ bool World::initPBRModel()
 
 bool World::initModel()
 {
+    initWorld(true, true);
+
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
     
     if (!pFirst)
@@ -187,14 +192,13 @@ bool World::initModel()
     return true;
 }
 
-void World::createIBLSpecular(char const* filename)
+void World::initIBLSpecular(char const* filename)
 {
     // load the HDR environment map
     stbi_set_flip_vertically_on_load(true);
     int width = 0, height = 0, nComponents = 0;
     float* data = stbi_loadf(filename, &width, &height, &nComponents, 0);
 
-    unsigned int hdrTexture=0;
     if (!data) {
         std::cout << "Failed to load HDR image." << std::endl;
         return;
@@ -222,7 +226,7 @@ void World::createIBLSpecular(char const* filename)
 
 
     // 1. setup cubemap to render to and attach to framebuffer
-    setShader(pShaderEnvCubemap);
+    pShaderEnvCubemap->use();
 
     glGenTextures(1, &envCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
@@ -253,14 +257,14 @@ void World::createIBLSpecular(char const* filename)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, hdrTexture);
 
-    glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+    glViewport(0, 0, 512, 512); 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i) {
         pShaderEnvCubemap->setMat4("view", captureViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderScene(false);
+        renderCube();
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -269,7 +273,7 @@ void World::createIBLSpecular(char const* filename)
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     // 2. create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
-    setShader(pShaderIrrConv);
+    pShaderIrrConv->use();
     
     glGenTextures(1, &irradianceMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
@@ -293,7 +297,7 @@ void World::createIBLSpecular(char const* filename)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
 
-    glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
+    glViewport(0, 0, 32, 32); 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -301,12 +305,12 @@ void World::createIBLSpecular(char const* filename)
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderScene(false);
+        renderCube();
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // 3. create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
-    setShader(pShaderPrefltr);
+    pShaderPrefltr->use();
 
     glGenTextures(1, &prefilterMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
@@ -348,7 +352,7 @@ void World::createIBLSpecular(char const* filename)
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            renderScene(false);
+            renderCube();
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -356,11 +360,9 @@ void World::createIBLSpecular(char const* filename)
     // 4. generate a 2D LUT from the BRDF equations used.
     pShaderBRDF->use();
 
-    unsigned int brdfLUTTexture;
-    glGenTextures(1, &brdfLUTTexture);
-
     // pre-allocate enough memory for the LUT texture.
-    glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+    glGenTextures(1, &brdfLUTTextureMap);
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTextureMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
     // be sure to set wrapping mode to GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -372,22 +374,25 @@ void World::createIBLSpecular(char const* filename)
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTextureMap, 0);
 
     glViewport(0, 0, 512, 512);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderQuad();
 
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, scrWidth, scrHeight);  // restore to screen resolution
 }
 
 void World::render() 
 {
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
-    createPtCubemapTexture();
 
+    pShaderPBR->use();
+    glViewport(0, 0, scrWidth, scrHeight);  // restore to screen resolution
+    
     while (!glfwWindowShouldClose(glWindow)) {
         // per-frame time dalta
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -414,13 +419,25 @@ void World::render()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // bind pre-computed IBL data
+        /*
+        pShaderPBR->setInt("irradianceMap", 10);
+        pShaderPBR->setInt("prefilterMap", 11);
+        pShaderPBR->setInt("brdfLUT", 12);
+        glActiveTexture(GL_TEXTURE10);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+        glActiveTexture(GL_TEXTURE11);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+        glActiveTexture(GL_TEXTURE12);
+        glBindTexture(GL_TEXTURE_2D, brdfLUTTextureMap);
+        */
+
         configDirLightShadowMap();
         configPtLightShadowMap(ptFarPlane);
-        renderScene(true);
 
         renderSkybox();
+        renderScene(true);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glfwSwapBuffers(glWindow);
         glfwPollEvents();
     }
@@ -429,6 +446,9 @@ void World::render()
 
 void World::generateDirShadowMap(float nearPlane, float farPlane)
 {
+    if ( !pShaderShadow || dirLights.size() == 0)
+        return;
+
     glm::mat4 lightMtrx = glm::mat4(0.f);
     unsigned int depthMapFBO = 0;
     setShader(pShaderShadow);
@@ -447,6 +467,9 @@ void World::generateDirShadowMap(float nearPlane, float farPlane)
 
 void World::configDirLightShadowMap()
 {
+    if (dirLights.size() == 0)
+        return;
+
     pShaderPBR->use();
     for (int i = 0; i < dirLights.size(); i++) {
         glm::mat4 lightMtrx = dirLights[i]->getMatrix();
@@ -651,22 +674,33 @@ void World::renderCube()
         glBindVertexArray(0);
     }
     // render Cube
+    glDisable(GL_CULL_FACE);
+
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
+
+    glEnable(GL_CULL_FACE);
 }
 
 void World::renderSkybox()
 {
     if (showSkybox) {
+        glm::mat4 projection = glm::perspective(glm::radians(pCamera->Zoom), (float)scrWidth / (float)scrHeight, 0.1f, 100.0f);
+
         pShaderBG->use();
+        pShaderBG->setMat4("projection", projection);
+        pShaderBG->setInt("environmentMap", 0);
         pShaderBG->setMat4("view", pCamera->GetViewMatrix());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
         //glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap); // display irradiance map
         //glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap); // display prefilter map
         renderCube();
+
+        pShaderPBR->use();  // restore
     }
+
 }
 
 void World::processInput(float deltaTime)
