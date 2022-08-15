@@ -129,7 +129,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }  
@@ -142,7 +142,7 @@ vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo,
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, roughness);   
     float G   = GeometrySmith(N, V, L, roughness);      
-    vec3 F    = fresnelSchlickRoughness(clamp(dot(H, V), 0.0, 1.0), F0, roughness);
+    vec3 F    = FresnelSchlickRoughness(clamp(dot(H, V), 0.0, 1.0), F0, roughness);
            
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero

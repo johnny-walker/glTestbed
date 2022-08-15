@@ -51,7 +51,7 @@ bool World::init()
     pShaderPBR = new Shader("pbr_model.vs", "pbr_model.fs");
     pShaderShadow = new Shader("shadow_mapping.vs", "shadow_mapping.fs");
     pShaderCubemap = new Shader("cubemap_depth.vs", "cubemap_depth.fs", "cubemap_depth.gs");
-    // IBL spacular
+    // IBL spacular shaders
     pShaderEnvCubemap = new Shader("env_cubemap.vs", "equi_to_cubemap.fs");
     pShaderIrrConv = new Shader("env_cubemap.vs", "irr_convolution.fs");
     pShaderPrefltr = new Shader("env_cubemap.vs", "prefilter.fs");
@@ -64,35 +64,41 @@ bool World::init()
     pShaderBG->use();
     pShaderBG->setInt("environmentMap", 0);
 
-    lightModel = 0;
-
     pShaderPBR->use();
+
+    initWorld(true, false);
+    initDirLights(1);
+    initPtLights(1);
+ 
+    return initPBRModel();
+}
+
+void World::initWorld(bool bFloor, bool bCube)
+{
+    lightModel = 0;
     pShaderPBR->setInt("lightId", (int)-1);
     pShaderPBR->setBool("ormMap", false);
 
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
-   
+
     // create floor
-    pFloor = new Floor(scrWidth, scrHeight);
-    pFloor->init(pShaderPBR, pCamera);
+    if (bFloor) {
+        pFloor = new Floor(scrWidth, scrHeight);
+        pFloor->init(pShaderPBR, pCamera);
+    }
 
-    pCube = new Cube(scrWidth, scrHeight);
-    pCube->init(pShaderPBR, pCamera);
-    pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-7.5f, 0.f, -5.5f);
-    pCube->setScale(0.5f);
-
-    initDirLights(1);
-    initPtLights(1);
- 
-    initModel();
-
-    return true;
+    if (bCube) {
+        pCube = new Cube(scrWidth, scrHeight);
+        pCube->init(pShaderPBR, pCamera);
+        pCube->setAngle(glm::radians(60.f), 1);
+        pCube->setPos(-7.5f, 0.f, -5.5f);
+        pCube->setScale(0.5f);
+    }
 }
 
 // at most 2 for point lights and direction lights
-bool World::initDirLights(int count)
+void World::initDirLights(int count)
 {
     // init direction lights
 
@@ -113,11 +119,9 @@ bool World::initDirLights(int count)
         dirLights.push_back(pDirLight);
     }
     pShaderPBR->setInt("dirLights.count", (int)dirLights.size());
-
-    return true;
 }
 
-bool World::initPtLights(int count)
+void World::initPtLights(int count)
 {
     // init point lights 
     pShaderPBR->use();
@@ -139,8 +143,6 @@ bool World::initPtLights(int count)
         ptLights.push_back(pPtLight);
     }
     pShaderPBR->setInt("ptLights.count", (int)ptLights.size());
-
-    return true;
 }
 
 bool World::initPBRModel()
@@ -148,6 +150,10 @@ bool World::initPBRModel()
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses/PF_eyeware.obj");
     //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_cat/cat_eyeware.obj");
     //pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/glasses_lace/lace_eyeware.obj");
+    
+    if (!pFirst)
+        return false;
+
     pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(45.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
@@ -163,6 +169,10 @@ bool World::initPBRModel()
 bool World::initModel()
 {
     pFirst = new BaseModel(scrWidth, scrHeight, "../../resources/objects/spot/spot.obj");
+    
+    if (!pFirst)
+        return false;
+
     pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(210.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
@@ -184,23 +194,22 @@ void World::createIBLSpecular(char const* filename)
     int width = 0, height = 0, nComponents = 0;
     float* data = stbi_loadf(filename, &width, &height, &nComponents, 0);
 
-
-    unsigned int hdrTexture;
-    if (data) {
-        glGenTextures(1, &hdrTexture);
-        glBindTexture(GL_TEXTURE_2D, hdrTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
-    } else {
+    unsigned int hdrTexture=0;
+    if (!data) {
         std::cout << "Failed to load HDR image." << std::endl;
         return;
     }
+ 
+    glGenTextures(1, &hdrTexture);
+    glBindTexture(GL_TEXTURE_2D, hdrTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
 
     // setup framebuffer
     glGenFramebuffers(1, &captureFBO);
@@ -212,8 +221,9 @@ void World::createIBLSpecular(char const* filename)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
 
-    // setup cubemap to render to and attach to framebuffer
-    unsigned int envCubemap;
+    // 1. setup cubemap to render to and attach to framebuffer
+    setShader(pShaderEnvCubemap);
+
     glGenTextures(1, &envCubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
     for (unsigned int i = 0; i < 6; ++i) {
@@ -238,7 +248,6 @@ void World::createIBLSpecular(char const* filename)
     };
 
     // convert HDR equirectangular environment map to cubemap 
-    pShaderEnvCubemap->use();
     pShaderEnvCubemap->setInt("equirectangularMap", 0);
     pShaderEnvCubemap->setMat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
@@ -251,7 +260,6 @@ void World::createIBLSpecular(char const* filename)
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        setShader(pShaderEnvCubemap);
         renderScene(false);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -260,8 +268,9 @@ void World::createIBLSpecular(char const* filename)
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    // create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
-    unsigned int irradianceMap;
+    // 2. create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
+    setShader(pShaderIrrConv);
+    
     glGenTextures(1, &irradianceMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     for (unsigned int i = 0; i < 6; ++i)
@@ -278,9 +287,7 @@ void World::createIBLSpecular(char const* filename)
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
 
-    // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
-    // -----------------------------------------------------------------------------
-    pShaderIrrConv->use();
+    // solve diffuse integral by convolution to create an irradiance (cube)map.
     pShaderIrrConv->setInt("environmentMap", 0);
     pShaderIrrConv->setMat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
@@ -294,13 +301,13 @@ void World::createIBLSpecular(char const* filename)
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        setShader(pShaderIrrConv);
         renderScene(false);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
-    unsigned int prefilterMap;
+    // 3. create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
+    setShader(pShaderPrefltr);
+
     glGenTextures(1, &prefilterMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
     for (unsigned int i = 0; i < 6; ++i)
@@ -315,11 +322,10 @@ void World::createIBLSpecular(char const* filename)
     // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
-    // ----------------------------------------------------------------------------------------------------
-    pShaderPrefltr->use();
+    // run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
     pShaderPrefltr->setInt("environmentMap", 0);
     pShaderPrefltr->setMat4("projection", captureProjection);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
 
@@ -342,13 +348,14 @@ void World::createIBLSpecular(char const* filename)
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            setShader(pShaderPrefltr);
             renderScene(false);
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // generate a 2D LUT from the BRDF equations used.
+    // 4. generate a 2D LUT from the BRDF equations used.
+    pShaderBRDF->use();
+
     unsigned int brdfLUTTexture;
     glGenTextures(1, &brdfLUTTexture);
 
@@ -368,7 +375,6 @@ void World::createIBLSpecular(char const* filename)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
     glViewport(0, 0, 512, 512);
-    pShaderBRDF->use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderQuad();
 
@@ -411,6 +417,8 @@ void World::render()
         configDirLightShadowMap();
         configPtLightShadowMap(ptFarPlane);
         renderScene(true);
+
+        renderSkybox();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glfwSwapBuffers(glWindow);
@@ -575,6 +583,90 @@ void World::renderQuad()
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
+}
+
+void World::renderCube()
+{
+    if (cubeVAO == 0)
+    {
+        //skybox
+        float vertices[] = {
+            // back face
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+             1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+             1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+            -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+            // front face
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+             1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+             1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+            -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+            // left face
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+            // right face
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+             1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+             1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+             1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+            // bottom face
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+             1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+             1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+             1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+            // top face
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+             1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+             1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+             1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+            -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+        };
+        glGenVertexArrays(1, &cubeVAO);
+        glGenBuffers(1, &cubeVBO);
+        // fill buffer
+        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        // link vertex attributes
+        glBindVertexArray(cubeVAO);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+    // render Cube
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
+void World::renderSkybox()
+{
+    if (showSkybox) {
+        pShaderBG->use();
+        pShaderBG->setMat4("view", pCamera->GetViewMatrix());
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        //glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap); // display irradiance map
+        //glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap); // display prefilter map
+        renderCube();
+    }
 }
 
 void World::processInput(float deltaTime)

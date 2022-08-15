@@ -55,21 +55,29 @@ public:
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 private:
+	void initWorld(bool bFloor = true, bool bCube = true);
+	void initDirLights(int count = 1);
+	void initPtLights(int count = 1);
 	bool initModel();
 	bool initPBRModel();
-	bool initDirLights(int count=1);
-	bool initPtLights(int count = 1);
 	void setShader(Shader* pShaderObj);
 	void renderScene(bool drawSphere = false);
 	void processInput(float deltaTime = 0.f);
 
 private:
-	// direction light shadow map
 	unsigned int quadVAO = 0;
 	unsigned int quadVBO = 0;
+
 	unsigned int captureFBO = 0;
 	unsigned int captureRBO = 0;
+	unsigned int envCubemap = 0;
+	unsigned int irradianceMap = 0;
+	unsigned int prefilterMap = 0;
 
+	unsigned int cubeVAO = 0;
+	unsigned int cubeVBO = 0;
+
+	bool showSkybox = true;
 	//bool showDepthMap = false;
 	//bool debugDepthMap = false;
 	
@@ -83,6 +91,8 @@ private:
 	void configDirLightShadowMap();
 
 	void renderQuad();
+	void renderCube();
+	void renderSkybox();
 
 private:
 	// point light cubemap
