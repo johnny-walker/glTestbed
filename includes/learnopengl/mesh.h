@@ -69,6 +69,16 @@ public:
         unsigned int ormNr = 1;
         unsigned int transNr = 1;
         unsigned int envNr = 1;
+
+        glUniform1i(glGetUniformLocation(shader.ID, "specularMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "normalMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "roughnesslMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "metalliclMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "aoMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "ormMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "transMap"), (int)false);
+        glUniform1i(glGetUniformLocation(shader.ID, "envMap"), (int)false);
+
         for (unsigned int i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding

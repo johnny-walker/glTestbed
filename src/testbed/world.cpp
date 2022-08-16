@@ -65,13 +65,16 @@ bool World::init()
 
     if (!pShaderPBR)
         return false;
-
     pShaderPBR->use();
-    initWorld(false, false);
-    initPBRModel();
 
-    //initModel();
-    //initWorld(true, true);
+    bool pbr = false;
+    if (pbr) {
+        initWorld(false, false);
+        initPBRModel();
+    } else {
+        initWorld(true, true);
+        initModel();
+    }
 
     return true;
 }
@@ -80,10 +83,6 @@ void World::initWorld(bool bFloor, bool bCube)
 {
     // init camera
     pCamera = new Camera(glm::vec3(0.f, 1.f, 9.f));
-
-    lightModel = 0;
-    pShaderPBR->setInt("lightId", (int)-1);
-    pShaderPBR->setBool("ormMap", false);
 
     initDirLights(1);
     initPtLights(1);
@@ -162,7 +161,7 @@ bool World::initPBRModel()
         return false;
 
     pFirst->init(pShaderPBR, pCamera);
-    pFirst->setAngle(glm::radians(45.f), 1);
+    pFirst->setAngle(glm::radians(30.f), 1);
     pFirst->setPos(0.f, 3.75f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
@@ -324,7 +323,7 @@ void World::generatePtCubemap(float nearPlane, float farPlane)
     setShader(pShaderCubemap);
     pShaderCubemap->setFloat("farPlane", farPlane);
 
-    float aspect = (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
+    float aspect = 1.f; // (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT;
     for (int i = 0; i < ptLights.size(); i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, depthCubemapFBO[i]);
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -372,6 +371,7 @@ void World::setShader(Shader* pShaderObj)
 void World::renderScene(bool drawSphere)
 {
     // render point lights sphere 
+    pShaderPBR->setInt("lightId", (int)-1);
     if (drawSphere) {
         if (lightModel == 0 || lightModel == 2) {
             for (int i = 0; i < ptLights.size(); i++)
@@ -483,7 +483,7 @@ void World::renderCube()
         glBindVertexArray(0);
     }
     // render Cube
-    glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE); // if enabled, cant shade clock-wise triangles
 
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
