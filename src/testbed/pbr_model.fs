@@ -12,7 +12,6 @@ uniform vec3 viewPos;
 // GL_TEXTURE0 + i
 // model texture maps
 uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
 uniform sampler2D texture_ao1;
 uniform sampler2D texture_roughness1;
@@ -184,7 +183,7 @@ float DirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int id)
 vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughness, float metallic) 
 {
     // reflectance equation
-    vec3 Lo = vec3(0.0);
+    vec3 Lo = vec3(0.f);
     for(int i = 0; i < dirLights.count; ++i) {
         vec3 L = normalize(dirLights.direction[i]);
         vec3 radiance = dirLights.color[i];
@@ -302,7 +301,7 @@ vec4 PBR_Lighting(vec3 N, vec3 V)
             SumLights += DirectionLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
     if (lightingModel == 0 || lightingModel == 2) {
-        //if (ptLights.count > 0)
+        if (ptLights.count > 0)
             SumLights += PointLighting(N, V, albedo, F0, ao, roughness, metallic);
     }
     return vec4(SumLights, alpha);
