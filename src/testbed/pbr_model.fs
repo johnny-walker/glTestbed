@@ -17,14 +17,15 @@ uniform sampler2D texture_ao1;
 uniform sampler2D texture_roughness1;
 uniform sampler2D texture_metallic1;
 uniform sampler2D texture_orm1;
+uniform sampler2D texture_trans1;
 
 // flags if using texutre mpas
-uniform bool specularMap;
 uniform bool normalMap;
 uniform bool aoMap;
 uniform bool roughnessMap;
 uniform bool metallicMap;
 uniform bool ormMap;
+uniform bool transMap;
 
 // GL_TEXTURE6 + i
 struct DirectLights {
@@ -55,10 +56,10 @@ uniform PointLights ptLights;
 
 // GL_TEXTURE10 + i
 // IBL maps
+uniform bool envMap;
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
-
 
 // render control flags
 uniform int lightId;        // draw specified point light color
@@ -128,6 +129,11 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
+vec3 FresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -141,7 +147,7 @@ vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo,
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, roughness);   
     float G   = GeometrySmith(N, V, L, roughness);      
-    vec3 F    = FresnelSchlickRoughness(clamp(dot(H, V), 0.0, 1.0), F0, roughness);
+    vec3 F    = FresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
            
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
@@ -153,6 +159,29 @@ vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo,
 
     float NdotL = max(dot(N, L), 0.0);        
     return (kD * albedo/PI + specular) * radiance * NdotL;
+}
+
+vec3 IBLAmbientLighting(vec3 N, vec3 V, vec3 F0, vec3 albedo, 
+                        float roughness, float metallic)
+{
+    vec3 R = reflect(-V, N); 
+    vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	  
+    
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse    = irradiance * albedo;
+    
+    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    vec3 ambient = kD*diffuse + specular;
+
+    return ambient;
 }
 
 // direction light
@@ -199,8 +228,14 @@ vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float rou
         Lo += iLo;
     }   
 
-    vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
-    vec3 color = ambient + Lo;
+    vec3 color = vec3(0.f);
+    if (envMap) {
+        vec3 ambient = IBLAmbientLighting(N, V, F0, albedo, roughness, metallic) * ao;
+        color = ambient + Lo;
+    } else {
+        vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
+        color = ambient + Lo;
+    }
 
     // HDR tonemapping & gamma correct
     color = color / (color + vec3(1.0));
@@ -255,9 +290,15 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
         iLo =  (1.f-shadow)*(iLo);
         Lo += iLo;
     }   
-   
-    vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
-    vec3 color = ambient + Lo;
+    
+    vec3 color = vec3(0.f);
+    if (envMap) {
+        vec3 ambient = IBLAmbientLighting(N, V, F0, albedo, roughness, metallic) * ao;
+        color = ambient + Lo;
+    } else {
+        vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
+        color = ambient + Lo;
+    }
 
     // HDR tonemapping & gamma correct
     color = color / (color + vec3(1.0));
@@ -278,7 +319,13 @@ vec4 PBR_Lighting(vec3 N, vec3 V)
 
     vec4 diffuse = texture(texture_diffuse1, fs_in.TexCoords);
     vec3 albedo  = pow(diffuse.rgb, vec3(2.2));
+
     alpha        = diffuse.a;
+
+    if (transMap) {
+        //todo
+        //vec4 trans =  texture(texture_trans1, fs_in.TexCoords);
+    }
 
     if (ormMap) {
         vec4 ormTex = texture(texture_orm1, fs_in.TexCoords);

@@ -79,6 +79,7 @@ private:
 	unsigned int cubeVBO = 0;
 
 	bool showSkybox = true;
+	bool mouseCallback = false;
 	//bool showDepthMap = false;
 	//bool debugDepthMap = false;
 	

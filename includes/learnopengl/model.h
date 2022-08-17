@@ -182,8 +182,8 @@ private:
         std::vector<Texture> ormMaps = loadMaterialTextures(material, aiTextureType_ORM, "texture_orm");
         textures.insert(textures.end(), ormMaps.begin(), ormMaps.end());
         // 9. custom transmission maps
-        //std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
-        //textures.insert(textures.end(), transMaps.begin(), transMaps.end());
+        std::vector<Texture> transMaps = loadMaterialTextures(material, aiTextureType_TRANSMISSION, "texture_trans");
+        textures.insert(textures.end(), transMaps.begin(), transMaps.end());
         // 10. custom environment maps
         //std::vector<Texture> envMaps = loadMaterialTextures(material, aiTextureType_ENVIRONMENT, "texture_env");
         //textures.insert(textures.end(), envMaps.begin(), envMaps.end());

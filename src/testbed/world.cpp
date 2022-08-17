@@ -33,9 +33,11 @@ bool World::init()
     glfwSetFramebufferSizeCallback(glWindow, framebuffer_size_callback);
 
     // mouse callbacks
-    //glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //glfwSetCursorPosCallback(glWindow, mouse_callback);
-    //glfwSetScrollCallback(glWindow, scroll_callback);
+    if (mouseCallback) {
+        glfwSetInputMode(glWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPosCallback(glWindow, mouse_callback);
+        glfwSetScrollCallback(glWindow, scroll_callback);
+    }
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -67,8 +69,8 @@ bool World::init()
         return false;
     pShaderPBR->use();
 
-    bool pbr = false;
-    if (pbr) {
+    bool pbrModel = true;
+    if (pbrModel) {
         initWorld(false, false);
         initPBRModel();
     } else {
@@ -226,19 +228,6 @@ void World::render()
         setShader(pShaderPBR);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // bind pre-computed IBL data
-        /*
-        pShaderPBR->setInt("irradianceMap", 10);
-        pShaderPBR->setInt("prefilterMap", 11);
-        pShaderPBR->setInt("brdfLUT", 12);
-        glActiveTexture(GL_TEXTURE10);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
-        glActiveTexture(GL_TEXTURE11);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-        glActiveTexture(GL_TEXTURE12);
-        glBindTexture(GL_TEXTURE_2D, brdfLUTTextureMap);
-        */
 
         configDirLightShadowMap();
         configPtLightShadowMap(ptFarPlane);
@@ -680,9 +669,22 @@ void World::initIBLSpecular(char const* filename)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     renderQuad();
 
+    // bind pre-computed IBL data
+    pShaderPBR->use();
+    pShaderPBR->setInt("envMap", (int) true);
+    pShaderPBR->setInt("irradianceMap", 10);
+    pShaderPBR->setInt("prefilterMap", 11);
+    pShaderPBR->setInt("brdfLUT", 12);
+    glActiveTexture(GL_TEXTURE10);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+    glActiveTexture(GL_TEXTURE11);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    glActiveTexture(GL_TEXTURE12);
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTextureMap);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, scrWidth, scrHeight);  // restore to screen resolution
+
 }
 
 void World::renderSkybox()
