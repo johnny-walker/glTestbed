@@ -8,7 +8,7 @@ private:
 	// drawing 
 	unsigned int sphereVAO = 0;
 	int indexCount = 0;
-	float drawScale = 0.1f;
+	float drawScale = 0.05f;
 
 public:
 	PointLight(int id, int width, int height);

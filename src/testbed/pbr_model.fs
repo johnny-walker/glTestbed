@@ -27,9 +27,9 @@ uniform bool metallicMap;
 uniform bool ormMap;
 uniform bool transMap;
 
-// render control flags
+// lighting control flags
 uniform int lightId;        // draw specified point light color
-uniform int lightingModel;  // light controls
+uniform int lightingModel;  // light modes
 uniform bool calcShadow;
 
 // GL_TEXTURE6 + i
@@ -66,6 +66,7 @@ uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
 
+const float MAX_REFLECTION_LOD = 4.0;
 const float Shadow_Bias = 0.05f;
 const float Weight_Ambient = 0.03f;
 const float Attenuate_Constant = 1.f;
@@ -162,7 +163,7 @@ vec3 BRDF_Lighting(vec3 N, vec3 V, vec3 L, vec3 radiance, vec3 F0, vec3 albedo,
     return (kD * albedo/PI + specular) * radiance * NdotL;
 }
 
-vec3 IBLAmbientLighting(vec3 N, vec3 V, vec3 F0, vec3 albedo, 
+vec3 IBL_Ambient_Lighting(vec3 N, vec3 V, vec3 F0, vec3 albedo, 
                         float roughness, float metallic)
 {
     vec3 R = reflect(-V, N); 
@@ -174,11 +175,10 @@ vec3 IBLAmbientLighting(vec3 N, vec3 V, vec3 F0, vec3 albedo,
     
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse    = irradiance * albedo;
-    
+    float NdotV     = max(dot(N, V), 0.0);    
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
-    const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    
-    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec2 brdf  = texture(brdfLUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     vec3 ambient = kD*diffuse + specular;
 
@@ -232,7 +232,7 @@ vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float rou
 
     vec3 color = vec3(0.f);
     if (envMap) {
-        vec3 ambient = IBLAmbientLighting(N, V, F0, albedo, roughness, metallic) * ao;
+        vec3 ambient = IBL_Ambient_Lighting(N, V, F0, albedo, roughness, metallic) * ao;
         color = ambient + Lo;
     } else {
         vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
@@ -296,7 +296,7 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
     
     vec3 color = vec3(0.f);
     if (envMap) {
-        vec3 ambient = IBLAmbientLighting(N, V, F0, albedo, roughness, metallic) * ao;
+        vec3 ambient = IBL_Ambient_Lighting(N, V, F0, albedo, roughness, metallic) * ao;
         color = ambient + Lo;
     } else {
         vec3 ambient = vec3(Weight_Ambient) * albedo * ao;
