@@ -71,7 +71,7 @@ bool World::init()
 
     bool pbrModel = true;
     if (pbrModel) {
-        initWorld(false, false);
+        initWorld(!showSkybox, !showSkybox);
         initPBRModel();
     } else {
         initWorld(true, true);
@@ -164,9 +164,10 @@ bool World::initPBRModel()
 
     pFirst->init(pShaderPBR, pCamera);
     pFirst->setAngle(glm::radians(30.f), 1);
-    pFirst->setPos(0.f, 3.75f, 0.f);
+    pFirst->setPos(0.f, 3.f, 0.f);
     pFirst->setScale(0.2f);
     pCtrlTarget = pFirst;
+
 
     initIBLSpecular("../../resources/hdr/newport_loft.hdr");
     pShaderPBR->use();
@@ -185,12 +186,6 @@ bool World::initModel()
     pFirst->setAngle(glm::radians(210.f), 1);
     pFirst->setPos(0.f, 0.25f, 0.f);
     pCtrlTarget = pFirst;
-
-    pCube = new Cube(scrWidth, scrHeight);
-    pCube->init(pShaderPBR, pCamera);
-    pCube->setAngle(glm::radians(60.f), 1);
-    pCube->setPos(-6.5f, 0.f, -5.5f);
-    pCube->setScale(0.5f);
 
     return true;
 }
@@ -221,8 +216,11 @@ void World::render()
         float dirNearPlane = 0.1f, dirFarPlane = 10.f;
         float ptNearPlane = 1.f, ptFarPlane = 25.f;
 
-        generateDirShadowMap(dirNearPlane, dirFarPlane);
-        generatePtCubemap(ptNearPlane, ptFarPlane);
+        pShaderPBR->setInt("calcShadow", (int)calcShadow);
+        if (calcShadow) {
+            generateDirShadowMap(dirNearPlane, dirFarPlane);
+            generatePtCubemap(ptNearPlane, ptFarPlane);
+        }
 
         // render scene
         setShader(pShaderPBR);
@@ -367,9 +365,10 @@ void World::renderScene(bool drawSphere)
                 ptLights[i]->render();
         }
     }
-    
-    if (pFloor) pFloor->render();
-    if (pCube)  pCube->render();
+    if (!iblMap || !showSkybox) {
+        if (pFloor) pFloor->render();
+        if (pCube)  pCube->render();
+    }
     if (pFirst) pFirst->render();
 }
 
@@ -492,7 +491,7 @@ void World::initIBLSpecular(char const* filename)
         std::cout << "Failed to load HDR image." << std::endl;
         return;
     }
-
+    iblMap = true;
     glGenTextures(1, &hdrTexture);
     glBindTexture(GL_TEXTURE_2D, hdrTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
@@ -775,8 +774,8 @@ void World::processInput(float deltaTime)
         lightModel = 2;
     }
 
-    //showDepthMap  = (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) ? true : false;
-    //debugDepthMap = (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) ? true : false;
+    calcShadow = (glfwGetKey(glWindow, GLFW_KEY_Z) == GLFW_PRESS) ? !CALC_SHADOW : CALC_SHADOW;
+    showSkybox = (glfwGetKey(glWindow, GLFW_KEY_X) == GLFW_PRESS) ? !SHOW_SKYBOX : SHOW_SKYBOX;
 
     if (glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS) {
         //todo

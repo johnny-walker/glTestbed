@@ -77,11 +77,14 @@ private:
 	unsigned int quadVBO = 0;
 	unsigned int cubeVAO = 0;
 	unsigned int cubeVBO = 0;
+	
+	const bool CALC_SHADOW = true;
+	const bool SHOW_SKYBOX = false;
+	bool calcShadow = CALC_SHADOW;
+	bool showSkybox = SHOW_SKYBOX;
 
-	bool showSkybox = true;
 	bool mouseCallback = false;
-	//bool showDepthMap = false;
-	//bool debugDepthMap = false;
+	bool iblMap = false;
 	
 	void initIBLSpecular(char const* filename);
 

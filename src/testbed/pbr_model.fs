@@ -27,6 +27,11 @@ uniform bool metallicMap;
 uniform bool ormMap;
 uniform bool transMap;
 
+// render control flags
+uniform int lightId;        // draw specified point light color
+uniform int lightingModel;  // light controls
+uniform bool calcShadow;
+
 // GL_TEXTURE6 + i
 struct DirectLights {
     int  count;
@@ -60,10 +65,6 @@ uniform bool envMap;
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
-
-// render control flags
-uniform int lightId;        // draw specified point light color
-uniform int lightingModel;  // light controls
 
 const float Shadow_Bias = 0.05f;
 const float Weight_Ambient = 0.03f;
@@ -221,9 +222,10 @@ vec3 DirectionLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float rou
         
         // check shadow
         float shadow = 0.f;
-        vec4 wPosLightSpace = dirLights.matrics[i] * vec4(fs_in.FragPos, 1.0); 
-        shadow = DirShadowCalculation(wPosLightSpace, L, i);
-
+        if (calcShadow) {
+            vec4 wPosLightSpace = dirLights.matrics[i] * vec4(fs_in.FragPos, 1.0); 
+            shadow = DirShadowCalculation(wPosLightSpace, L, i);
+        }
         iLo = (1.f-shadow)*(iLo);
         Lo += iLo;
     }   
@@ -285,8 +287,9 @@ vec3 PointLighting(vec3 N, vec3 V, vec3 albedo, vec3 F0, float ao, float roughne
                
         // check shadow
         float shadow = 0.f;
-        shadow = PtCubemapShadowCalculation(i);
-
+        if (calcShadow) {
+            shadow = PtCubemapShadowCalculation(i);
+        }
         iLo =  (1.f-shadow)*(iLo);
         Lo += iLo;
     }   
